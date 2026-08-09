@@ -1,6 +1,3 @@
-telethon
-aiohttp
-google-play-scraper
-selectolax
-cryptography
+pyTelegramBotAPI
+requests
 flask
