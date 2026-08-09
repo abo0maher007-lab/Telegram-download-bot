@@ -1,3 +1,6 @@
-pyTelegramBotAPI
-requests
+Telethon
+aiohttp
+google-play-scraper
+selectolax
+cryptography
 flask
