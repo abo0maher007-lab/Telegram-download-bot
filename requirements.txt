@@ -1,2 +1,7 @@
-telethon
+Telethon
+aiohttp
+beautifulsoup4
+google-play-scraper
+selectolax
+cryptography
 yt-dlp
