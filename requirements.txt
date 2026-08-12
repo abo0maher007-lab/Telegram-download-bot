@@ -5,3 +5,5 @@ google-play-scraper
 selectolax
 cryptography
 yt-dlp
+mega.py
+Pillow
