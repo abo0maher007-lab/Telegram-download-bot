@@ -7,3 +7,4 @@ cryptography
 yt-dlp
 mega.py
 Pillow
+gdown
