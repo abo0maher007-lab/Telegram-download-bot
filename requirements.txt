@@ -6,3 +6,4 @@ selectolax
 cryptography
 yt-dlp
 Pillow
+gdown
