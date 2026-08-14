@@ -7,3 +7,5 @@ cryptography
 yt-dlp
 Pillow
 gdown
+requests
+hachoir
