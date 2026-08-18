@@ -1,15 +1,13 @@
 import os
 import base64
 
-VERSION = "v80.0-Modular-Edition"
+VERSION = "v80.0-Modular-Fixed"
 API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PORT = int(os.environ.get("PORT", 8080))
 
-DB_FILE = "bot_database.db"
-X_COOKIES_FILE = "x_cookies.txt"
-INSTAGRAM_COOKIES_FILE = "instagram_cookies.txt"
+ACTIVE_CANCEL_EVENTS = {}
 
 FONT_SIZE_MAP = {
     "small": 2.18,
@@ -17,6 +15,9 @@ FONT_SIZE_MAP = {
     "large": 5.35,
     "xlarge": 10.45
 }
+
+X_COOKIES_FILE = "x_cookies.txt"
+INSTAGRAM_COOKIES_FILE = "instagram_cookies.txt"
 
 BROWSER_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
@@ -35,6 +36,14 @@ def setup_all_cookies():
         try:
             with open(X_COOKIES_FILE, "wb") as f:
                 f.write(base64.b64decode(x_b64.strip()))
+        except Exception: pass
+
+    ig_b64 = os.environ.get("INSTAGRAM_COOKIES_BASE64")
+    if ig_b64:
+        try:
+            with open(INSTAGRAM_COOKIES_FILE, "wb") as f:
+                f.write(base64.b64decode(ig_b64.strip()))
+        except Exception: pass                f.write(base64.b64decode(x_b64.strip()))
         except Exception: pass
 
     ig_b64 = os.environ.get("INSTAGRAM_COOKIES_BASE64")
