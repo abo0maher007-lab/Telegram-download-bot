@@ -1,12 +1,9 @@
 import os
-import base64
 
-VERSION = "v79.2-Modular-Fixed"
-
-# جلب القيم من متغيرات بيئة Railway مباشرة
-API_ID = int(os.environ.get("API_ID", 0)) if os.environ.get("API_ID") else 0
-API_HASH = os.environ.get("API_HASH", "").strip()
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
+VERSION = "v79.1-TimeFormatted-Edition"
+API_ID = int(os.environ.get("API_ID", 0))
+API_HASH = os.environ.get("API_HASH", "")
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PORT = int(os.environ.get("PORT", 8080))
 
 X_COOKIES_FILE = "x_cookies.txt"
@@ -28,13 +25,7 @@ BROWSER_HEADERS = {
     'Sec-Fetch-Mode': 'navigate',
     'Sec-Fetch-Site': 'none',
     'Connection': 'keep-alive'
-}
-
-def setup_all_cookies():
-    x_b64 = os.environ.get("X_COOKIES_BASE64")
-    if x_b64:
-        try:
-            with open(X_COOKIES_FILE, "wb") as f:
+}            with open(X_COOKIES_FILE, "wb") as f:
                 f.write(base64.b64decode(x_b64.strip()))
         except Exception: pass
 
