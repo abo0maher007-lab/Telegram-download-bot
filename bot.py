@@ -24,35 +24,15 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 threading.Thread(target=lambda: HTTPServer(('0.0.0.0', PORT), HealthCheckHandler).serve_forever(), daemon=True).start()
 
-# 3. إنشاء كائن البوت وتمرير التوكن عند الإنشاء مباشرة
+# 3. إنشاء كائن البوت
 bot = TelegramClient('bot_session', API_ID, API_HASH)
 
 async def main():
     register_handlers(bot)
-    # تسجيل الدخول كـ Bot باستخدام التوكن من متغيرات البيئة
-    await bot.start(bot_token=str(BOT_TOKEN).strip())
-    print("🤖 تم بدء تشغيل البوت والربط مع Railway بنجاح!")
+    # تشغيل البوت باستخدام التوكن الممرر من config.py المربوط بمتغيرات المنصة
+    await bot.start(bot_token=BOT_TOKEN)
+    print("🤖 تم التشغيل بنجاح والربط مع متغيرات منصة Railway!")
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    bot.loop.run_until_complete(main())if __name__ == '__main__':
-    asyncio.run(main())    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())    loop.run_until_complete(main())    clean_download_folder()
-
-    # 2. تشغيل سيرفر الـ Health Check في المسار الخلفي (Background Thread)
-    threading.Thread(
-        target=lambda: HTTPServer(('0.0.0.0', PORT), HealthCheckHandler).serve_forever(), 
-        daemon=True
-    ).start()
-
-    # 3. تشغيل بوت تيليجرام وتسجيل المعالجات
-    bot = TelegramClient('bot_session', API_ID, API_HASH)
-    register_handlers(bot)
-
-    print("🤖 تم تشغيل البوت بنجاح بالهيكلية المقسّمة الجديدة عبر bot.py!")
-    bot.start(bot_token=BOT_TOKEN)
-    bot.run_until_disconnected()
-
-if __name__ == '__main__':
-    main()
-  
+    asyncio.run(main())
