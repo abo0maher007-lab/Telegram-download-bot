@@ -43,6 +43,15 @@ def setup_all_cookies():
         try:
             with open(INSTAGRAM_COOKIES_FILE, "wb") as f:
                 f.write(base64.b64decode(ig_b64.strip()))
+        except Exception: pass            with open(X_COOKIES_FILE, "wb") as f:
+                f.write(base64.b64decode(x_b64.strip()))
+        except Exception: pass
+
+    ig_b64 = os.environ.get("INSTAGRAM_COOKIES_BASE64")
+    if ig_b64:
+        try:
+            with open(INSTAGRAM_COOKIES_FILE, "wb") as f:
+                f.write(base64.b64decode(ig_b64.strip()))
         except Exception: pass        except Exception: pass
 
     ig_b64 = os.environ.get("INSTAGRAM_COOKIES_BASE64")
