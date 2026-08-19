@@ -1,10 +1,12 @@
 import os
 import base64
 
-VERSION = "v79.1-Modular-Fixed"
-API_ID = int(os.environ.get("API_ID", 0))
-API_HASH = os.environ.get("API_HASH", "")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+VERSION = "v79.2-Modular-Fixed"
+
+# جلب القيم من متغيرات بيئة Railway مباشرة
+API_ID = int(os.environ.get("API_ID", 0)) if os.environ.get("API_ID") else 0
+API_HASH = os.environ.get("API_HASH", "").strip()
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "").strip()
 PORT = int(os.environ.get("PORT", 8080))
 
 X_COOKIES_FILE = "x_cookies.txt"
@@ -35,6 +37,13 @@ def setup_all_cookies():
             with open(X_COOKIES_FILE, "wb") as f:
                 f.write(base64.b64decode(x_b64.strip()))
         except Exception: pass
+
+    ig_b64 = os.environ.get("INSTAGRAM_COOKIES_BASE64")
+    if ig_b64:
+        try:
+            with open(INSTAGRAM_COOKIES_FILE, "wb") as f:
+                f.write(base64.b64decode(ig_b64.strip()))
+        except Exception: pass        except Exception: pass
 
     ig_b64 = os.environ.get("INSTAGRAM_COOKIES_BASE64")
     if ig_b64:
