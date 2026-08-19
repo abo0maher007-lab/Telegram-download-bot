@@ -24,17 +24,18 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 threading.Thread(target=lambda: HTTPServer(('0.0.0.0', PORT), HealthCheckHandler).serve_forever(), daemon=True).start()
 
-# 3. إنشاء كائن البوت وتشغيله بطريقة Asyncio الآمنة
+# 3. إنشاء كائن البوت
 bot = TelegramClient('bot_session', API_ID, API_HASH)
 
 async def main():
     register_handlers(bot)
+    # تشغيل البوت باستخدام التوكن الممرر من config.py المربوط بمتغيرات المنصة
     await bot.start(bot_token=BOT_TOKEN)
-    print("🤖 البوت يعمل بنجاح وبكفاءة عالية على منصة Railway عبر bot.py!")
+    print("🤖 تم التشغيل بنجاح والربط مع متغيرات منصة Railway!")
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
+    asyncio.run(main())    loop = asyncio.get_event_loop()
     loop.run_until_complete(main())    loop.run_until_complete(main())    clean_download_folder()
 
     # 2. تشغيل سيرفر الـ Health Check في المسار الخلفي (Background Thread)
