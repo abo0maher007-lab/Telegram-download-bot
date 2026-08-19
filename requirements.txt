@@ -1,12 +1,6 @@
 telethon
-aiohttp
-beautifulsoup4
-selectolax
-cryptography
 yt-dlp
+gallery-dl
 Pillow
-gdown
+aiohttp
 requests
-hachoir
-moviepy
-curl_cffi
