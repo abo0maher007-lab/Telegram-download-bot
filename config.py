@@ -1,13 +1,14 @@
 import os
 import base64
 
-VERSION = "v79.1-TimeFormatted-Edition"
+VERSION = "v79.1-Modular-Fixed"
 API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 PORT = int(os.environ.get("PORT", 8080))
 
-ACTIVE_CANCEL_EVENTS = {}
+X_COOKIES_FILE = "x_cookies.txt"
+INSTAGRAM_COOKIES_FILE = "instagram_cookies.txt"
 
 FONT_SIZE_MAP = {
     "small": 2.18,
@@ -16,8 +17,16 @@ FONT_SIZE_MAP = {
     "xlarge": 10.45
 }
 
-X_COOKIES_FILE = "x_cookies.txt"
-INSTAGRAM_COOKIES_FILE = "instagram_cookies.txt"
+BROWSER_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
+    'Referer': 'https://www.tiktok.com/',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Connection': 'keep-alive'
+}
 
 def setup_all_cookies():
     x_b64 = os.environ.get("X_COOKIES_BASE64")
@@ -32,9 +41,7 @@ def setup_all_cookies():
         try:
             with open(INSTAGRAM_COOKIES_FILE, "wb") as f:
                 f.write(base64.b64decode(ig_b64.strip()))
-        except Exception: pass
-
-setup_all_cookies()
+        except Exception: passsetup_all_cookies()
 
 BROWSER_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
