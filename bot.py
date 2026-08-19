@@ -3,17 +3,18 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telethon import TelegramClient
 
-from config import API_ID, API_HASH, BOT_TOKEN, PORT
+from config import API_ID, API_HASH, BOT_TOKEN, PORT, setup_all_cookies
 from utils import update_libraries, clean_download_folder
 from database import init_db
 from handlers import register_handlers
 
-# 1. تهيئة قاعدة البيانات والمجلدات
+# 1. إعداد البيئة وقاعدة البيانات
+setup_all_cookies()
 update_libraries()
 init_db()
 clean_download_folder()
 
-# 2. خادم فحص الصحة لتجنب الإغلاق
+# 2. خادم صحة الاستضافة (Railway Health Check Server)
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self): 
         self.send_response(200)
@@ -23,18 +24,18 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 threading.Thread(target=lambda: HTTPServer(('0.0.0.0', PORT), HealthCheckHandler).serve_forever(), daemon=True).start()
 
-# 3. إنشاء البوت وتشغيله
+# 3. إنشاء كائن البوت وتشغيله بطريقة Asyncio الآمنة
 bot = TelegramClient('bot_session', API_ID, API_HASH)
 
 async def main():
     register_handlers(bot)
     await bot.start(bot_token=BOT_TOKEN)
-    print("🤖 البوت يعمل بنجاح من خلال bot.py!")
+    print("🤖 البوت يعمل بنجاح وبكفاءة عالية على منصة Railway عبر bot.py!")
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())    clean_download_folder()
+    loop.run_until_complete(main())    loop.run_until_complete(main())    clean_download_folder()
 
     # 2. تشغيل سيرفر الـ Health Check في المسار الخلفي (Background Thread)
     threading.Thread(
