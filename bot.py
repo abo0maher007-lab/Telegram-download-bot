@@ -3,18 +3,10 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from telethon import TelegramClient
 
-from config import API_ID, API_HASH, BOT_TOKEN, PORT, setup_all_cookies
-from utils import update_libraries, clean_download_folder
-from database import init_db
-from handlers import register_handlers
+from config import API_ID, API_HASH, BOT_TOKEN, PORT
+import handlers  # تسجيل الأحداث والأوامر
 
-# 1. إعداد البيئة وقاعدة البيانات
-setup_all_cookies()
-update_libraries()
-init_db()
-clean_download_folder()
-
-# 2. خادم صحة الاستضافة (Railway Health Check Server)
+# --- Health Check لسيرفر Railway ---
 class HealthCheckHandler(BaseHTTPRequestHandler):
     def do_GET(self): 
         self.send_response(200)
@@ -24,15 +16,18 @@ class HealthCheckHandler(BaseHTTPRequestHandler):
 
 threading.Thread(target=lambda: HTTPServer(('0.0.0.0', PORT), HealthCheckHandler).serve_forever(), daemon=True).start()
 
-# 3. إنشاء كائن البوت
+# --- إنشاء كائن البوت ---
 bot = TelegramClient('bot_session', API_ID, API_HASH)
 
+# تسجيل الـ Handlers مع البوت
+handlers.register_handlers(bot)
+
+# --- تشغيل البوت بنظام Async المباشر ---
 async def main():
-    register_handlers(bot)
-    # تشغيل البوت باستخدام التوكن الممرر من config.py المربوط بمتغيرات المنصة
     await bot.start(bot_token=BOT_TOKEN)
-    print("🤖 تم التشغيل بنجاح والربط مع متغيرات منصة Railway!")
+    print("🤖 البوت يعمل بأعلى كفاءة في النظام المقسّم!")
     await bot.run_until_disconnected()
 
 if __name__ == '__main__':
+    asyncio.run(main())if __name__ == '__main__':
     asyncio.run(main())
