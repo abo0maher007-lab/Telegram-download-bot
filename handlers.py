@@ -2,22 +2,41 @@ import time
 import re
 import asyncio
 from telethon import events, Button
+
 from config import VERSION, ACTIVE_CANCEL_EVENTS
 from database import get_user_config, set_user_config, save_task, pop_task
-from utils import get_clean_filename, is_x_url, is_complex_url
+from utils import get_clean_filename, is_x_url, is_instagram_url, is_complex_url
 from downloader import start_direct_execution
 
 def build_settings_buttons(chat_id):
     config = get_user_config(chat_id)
-    snap_status = "✅ مفعّلة" if config["snapshots"] else "❌ معطلة"
     
-    font_labels = {"small": "متوسط", "medium": "كبير جداً", "large": "ضخم", "xlarge": "عملاق"}
+    snap_status = "✅ مفعّلة (عام)" if config["snapshots"] else "❌ معطلة"
+    social_snap_status = "✅ مفعّلة" if config["social_snapshots"] else "❌ معطلة (مباشر فقط)"
     
-    return [
-        [Button.inline(f"📸 لقطات الفيديو: {snap_status}", data="toggle_snaps")],
-        [Button.inline(f"🎥 الجودة: {config['quality']}p", data="change_qual"), Button.inline(f"🔤 الخط: {font_labels.get(config['font_size'], 'ضخم')}", data="change_font")],
-        [Button.inline("❌ إغلاق اللوحة", data="close_settings")]
+    font_labels = {
+        "small": "متوسط",
+        "medium": "كبير جداً",
+        "large": "ضخم (الافتراضي)",
+        "xlarge": "عملاق"
+    }
+    
+    buttons = [
+        [
+            Button.inline(f"📸 لقطات الفيديو: {snap_status}", data="toggle_snaps")
+        ],
+        [
+            Button.inline(f"🌐 لقطات منصات التواصل: {social_snap_status}", data="toggle_social_snaps")
+        ],
+        [
+            Button.inline(f"🎥 الجودة: {config['quality']}p", data="change_qual"),
+            Button.inline(f"🔤 الخط: {font_labels.get(config['font_size'], 'ضخم')}", data="change_font")
+        ],
+        [
+            Button.inline("❌ إغلاق اللوحة", data="close_settings")
+        ]
     ]
+    return buttons
 
 def register_handlers(bot):
 
@@ -28,13 +47,217 @@ def register_handlers(bot):
         if task_id in ACTIVE_CANCEL_EVENTS:
             ACTIVE_CANCEL_EVENTS[task_id].set()
             await event.answer("🛑 جاري إلغاء العملية...", alert=True)
+        else:
+            await event.answer("⚠️ العملية غير موجودة أو انتهت بالفعل.", alert=True)
 
     @bot.on(events.NewMessage(pattern=r"^/settings$"))
     async def settings_handler(event):
         chat_id = event.chat_id
-        await event.respond("⚙️ **لوحة التحكم والإعدادات الخاصّة بالبوت:**", buttons=build_settings_buttons(chat_id))
+        msg = "⚙️ **لوحة التحكم والإعدادات الخاصّة بالبوت:**\n\nقم بالضغط على الأزرار أدناه لتعديل خيارات التحميل والتقاط الصور."
+        buttons = build_settings_buttons(chat_id)
+        await event.respond(msg, buttons=buttons)
 
-    @bot.on(events.CallbackQuery(pattern=r"^(toggle_snaps|change_qual|change_font|close_settings)$"))
+    @bot.on(events.CallbackQuery(pattern=r"^(toggle_snaps|toggle_social_snaps|change_qual|change_font|close_settings)$"))
+    async def settings_callback_handler(event):
+        chat_id = event.chat_id
+        data = event.data.decode("utf-8")
+        config = get_user_config(chat_id)
+
+        if data == "toggle_snaps":
+            config["snapshots"] = not config["snapshots"]
+            set_user_config(chat_id, config)
+            await event.answer("تم تغيير حالة ألبوم اللقطات العام!")
+
+        elif data == "toggle_social_snaps":
+            config["social_snapshots"] = not config["social_snapshots"]
+            set_user_config(chat_id, config)
+            state_txt = "تفعيل" if config["social_snapshots"] else "إيقاف"
+            await event.answer(f"تم {state_txt} التقاط الصور من روابط منصات التواصل الاجتماعي!")
+
+        elif data == "change_qual":
+            qualities = ["480", "720", "1080"]
+            current_idx = qualities.index(config["quality"]) if config["quality"] in qualities else 1
+            config["quality"] = qualities[(current_idx + 1) % len(qualities)]
+            set_user_config(chat_id, config)
+            await event.answer(f"تم اختيار الجودة الافتراضية: {config['quality']}p")
+
+        elif data == "change_font":
+            fonts = ["small", "medium", "large", "xlarge"]
+            current_idx = fonts.index(config["font_size"]) if config["font_size"] in fonts else 2
+            config["font_size"] = fonts[(current_idx + 1) % len(fonts)]
+            set_user_config(chat_id, config)
+            await event.answer("تم تعديل حجم الخط!")
+
+        elif data == "close_settings":
+            await event.delete()
+            return
+
+        msg = "⚙️ **لوحة التحكم والإعدادات الخاصّة بالبوت:**\n\nقم بالضغط على الأزرار أدناه لتعديل خيارات التحميل والتقاط الصور."
+        new_buttons = build_settings_buttons(chat_id)
+        await event.edit(msg, buttons=new_buttons)
+
+    @bot.on(events.NewMessage(pattern=r"^/trim\s+(\S+)\s+(\S+)\s+(https?://\S+)"))
+    async def trim_handler(event):
+        start_t = event.pattern_match.group(1)
+        end_t = event.pattern_match.group(2)
+        url = event.pattern_match.group(3)
+        chat_id = event.chat_id
+
+        user_config = get_user_config(chat_id)
+        status_msg = await event.respond(f"✂️ **جاري تحضير قص المقطع من ({start_t}) إلى ({end_t})...**")
+
+        asyncio.create_task(
+            start_direct_execution(
+                bot=bot,
+                chat_id=chat_id,
+                url=url,
+                filename=get_clean_filename(url),
+                as_doc=False,
+                quality=user_config["quality"],
+                target_fmt='mp4',
+                status_msg=status_msg,
+                trim_times=(start_t, end_t)
+            )
+        )
+
+    @bot.on(events.NewMessage(pattern=r"^/start$"))
+    async def start_handler(event):
+        welcome_text = (
+            "🤖 **أهلاً بك في بوت التنزيل المباشر والشامل!**\n\n"
+            "✨ **أبرز ميزات وخدمات البوت:**\n\n"
+            "🔗 **الروابط المباشرة ومنصات التواصل الاجتماعي**\n"
+            "• تنزيل بأعلى جودة أو تحويل لـ MP3 أو مستندات.\n"
+            "• **تقسيم كتل الفيديوهات الضخمة تلقائياً** لمنع تجاوز حدود تيليجرام.\n"
+            "• **قص مقطع محدد:** استخدم الأمر `/trim [بدء] [نهاية] [رابط]`.\n"
+            "• **حفظ التفضيلات الدائم:** حفظ خياراتك عبر SQLite.\n\n"
+            "⚙️ لتعديل الإعدادات أرسل: `/settings`"
+        )
+        buttons = [[Button.inline("📜 سجل التحديثات", data="show_changelog")]]
+        await event.respond(welcome_text, buttons=buttons)
+
+    @bot.on(events.CallbackQuery(pattern=r"^(show_changelog|close_changelog)$"))
+    async def changelog_callback_handler(event):
+        data = event.data.decode("utf-8")
+        if data == "show_changelog":
+            changelog_text = (
+                f"📜 **سجل التحديثات والتعديلات ({VERSION}):**\n\n"
+                "1️⃣ **تنسيق عرض الوقت:** تحويل عرض الوقت المنقضي والمتبقي تلقائياً إلى صيغة (دقائق وثوانٍ).\n"
+                "2️⃣ **تحسين الأداء Non-Blocking:** التنزيل المباشر باستخدام `aiohttp` لمنع تجميد الاستجابة.\n"
+                "3️⃣ **قاعدة بيانات SQLite:** حفظ تفضيلات المستخدم والمهام بدون ضياع عند التحديث.\n"
+                "4️⃣ **تقسيم الفيديوهات تلقائياً (Video Splitter):** تجزئة أوتوماتيكية للفيديوهات +1.9GB.\n"
+                "5️⃣ **قص الفيديو (Video Trimmer):** قص مقطع زمني محدد باستخدام أمر `/trim`.\n\n"
+                f"📌 الإصدار الحالي: `{VERSION}`"
+            )
+            buttons = [[Button.inline("❌ إغلاق السجل", data="close_changelog")]]
+            await event.respond(changelog_text, buttons=buttons)
+            await event.answer()
+        elif data == "close_changelog":
+            await event.delete()
+
+    @bot.on(events.NewMessage(pattern=r"(https?://\S+)"))
+    async def url_handler(event):
+        if event.text.startswith("/trim"):
+            return
+
+        urls = re.findall(r"https?://\S+", event.text)
+        if not urls: return
+        chat_id = event.chat_id
+        
+        for u in urls:
+            clean_u = u.split('?')[0] if is_instagram_url(u) else u
+            
+            if is_x_url(clean_u):
+                task_key = f"x_{chat_id}_{int(time.time()*1000)}"
+                save_task(task_key, clean_u, "x")
+                buttons = [
+                    [Button.inline("🎬 عالية (1080p)", data=f"q_1080_{task_key}"), Button.inline("🎥 متوسطة (720p)", data=f"q_720_{task_key}")],
+                    [Button.inline("📱 منخفضة (480p)", data=f"q_480_{task_key}"), Button.inline("🎵 صوت فقط (MP3)", data=f"q_mp3_{task_key}")]
+                ]
+                await event.respond("🎬 **اختر جودة الفيديو المطلوبة لمنصة X:**", buttons=buttons)
+                
+            elif not is_complex_url(clean_u):
+                task_key = f"dir_{chat_id}_{int(time.time()*1000)}"
+                save_task(task_key, clean_u, "direct")
+                buttons = [
+                    [
+                        Button.inline("🎬 MP4", data=f"dir_mp4_{task_key}"),
+                        Button.inline("🎵 MP3", data=f"dir_mp3_{task_key}"),
+                        Button.inline("📄 مستند", data=f"dir_doc_{task_key}")
+                    ]
+                ]
+                await event.respond("📌 **تم رصد رابط مباشر. اختر صيغة التحميل المناسبة:**", buttons=buttons)
+                
+            else:
+                user_config = get_user_config(chat_id)
+                asyncio.create_task(
+                    start_direct_execution(
+                        bot=bot,
+                        chat_id=chat_id,
+                        url=clean_u,
+                        filename=get_clean_filename(clean_u),
+                        as_doc=False,
+                        quality=user_config["quality"],
+                        target_fmt='mp4'
+                    )
+                )
+
+    @bot.on(events.CallbackQuery(pattern=r"^q_"))
+    async def quality_callback_handler(event):
+        data = event.data.decode("utf-8").split("_")
+        quality_choice = data[1]
+        task_key = "_".join(data[2:])
+        
+        url, _ = pop_task(task_key)
+        if not url:
+            await event.answer("⚠️ انتهت صلاحية هذا الخيار، يرجى إعادة إرسال الرابط.", alert=True)
+            return
+            
+        chat_id = event.chat_id
+        target_fmt = 'mp3' if quality_choice == 'mp3' else 'mp4'
+        quality_val = 'best' if quality_choice == '1080' else quality_choice
+        status_msg = await event.edit("⏳ **تم استلام طلبك، جاري بدء التنزيل...**", buttons=None)
+        
+        asyncio.create_task(
+            start_direct_execution(
+                bot=bot,
+                chat_id=chat_id,
+                url=url,
+                filename=get_clean_filename(url),
+                as_doc=False,
+                quality=quality_val,
+                target_fmt=target_fmt,
+                status_msg=status_msg
+            )
+        )
+
+    @bot.on(events.CallbackQuery(pattern=r"^dir_"))
+    async def direct_callback_handler(event):
+        data = event.data.decode("utf-8").split("_")
+        choice = data[1]
+        task_key = "_".join(data[2:])
+        
+        url, _ = pop_task(task_key)
+        if not url:
+            await event.answer("⚠️ انتهت صلاحية هذا الخيار، يرجى إعادة إرسال الرابط.", alert=True)
+            return
+            
+        chat_id = event.chat_id
+        as_doc = (choice == 'doc')
+        target_fmt = choice if choice in ['mp4', 'mp3'] else 'mp4'
+        status_msg = await event.edit("⏳ **جاري بدء التنزيل المباشر...**", buttons=None)
+        
+        asyncio.create_task(
+            start_direct_execution(
+                bot=bot,
+                chat_id=chat_id,
+                url=url,
+                filename=get_clean_filename(url),
+                as_doc=as_doc,
+                quality='best',
+                target_fmt=target_fmt,
+                status_msg=status_msg
+            )
+        )    @bot.on(events.CallbackQuery(pattern=r"^(toggle_snaps|change_qual|change_font|close_settings)$"))
     async def settings_callback_handler(event):
         chat_id = event.chat_id
         data = event.data.decode("utf-8")
