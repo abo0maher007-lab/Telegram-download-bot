@@ -1,6 +1,8 @@
-pyrogram
-tgcrypto
-yt-dlp
-aiohttp
-aiofiles
-curl_cffi
+python-telegram-bot==21.0.1
+yt-dlp==2024.1.1
+aiohttp==3.9.1
+requests==2.31.0
+beautifulsoup4==4.12.2
+cloudscraper==1.2.71
+ffmpeg-python==0.2.0
+lxml==5.1.0
