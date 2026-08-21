@@ -12,10 +12,10 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, 
 from yt_dlp import YoutubeDL
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger("DownloaderBot-v5")
+logger = logging.getLogger("DownloaderBot-v6")
 
 # ----------------------------------------------------
-# 🚂 الإعداد والمتغيرات - v5
+# 🚂 الإعداد والمتغيرات - v6
 # ----------------------------------------------------
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
@@ -25,21 +25,24 @@ if not API_ID or not API_HASH or not BOT_TOKEN:
     logger.critical("❌ خطأ: المتغيرات غير معرفة!")
     exit(1)
 
-app = Client("SmartDownloaderBot_v5", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("SmartDownloaderBot_v6", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 ACTIVE_TASKS = {}
 CANCELLED_TASKS = set()
 START_TIME = time.time()
 
+# التحقق من وجود ملف الـ Cookies
+COOKIES_FILE = "cookies.txt" if os.path.exists("cookies.txt") else None
+
 class ProcessCancelledException(Exception):
     pass
 
 # ----------------------------------------------------
-# 📊 أدوات v5 Quantum (التنظيف، القشط العميق، والقياس)
+# 📊 أدوات v6 Ultra-Bypass
 # ----------------------------------------------------
 
 def cleanup_temp_files(task_id: str):
-    """تنظيف شامل ومضمون لكافة الآثار والملفات المؤقتة"""
+    """تنظيف شامل ونهائي لكافة الملفات المؤقتة والجلسات"""
     patterns = [
         f"downloads/{task_id}*",
         f"downloads/thumb_{task_id}*"
@@ -65,43 +68,31 @@ def get_video_duration(video_path: str) -> int:
     except Exception:
         return 0
 
-def scrape_direct_video_link_v5(url: str) -> str:
-    """محرك v5 العميق لقراءة السكريبتات واستخراج الروابط المخفية"""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Sec-Ch-Ua": '"Not;A=Brand";v="24", "Chromium";v="128"',
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": '"Windows"'
-    }
+def scrape_with_playwright_v6(url: str) -> str:
+    """محرك v6 الافتراضي للتقاط الفيديو عبر متصفح الحقيقي Playwright"""
     try:
-        session = requests.Session()
-        resp = session.get(url, headers=headers, timeout=12, verify=False)
-        if resp.status_code == 200:
-            soup = BeautifulSoup(resp.text, 'html.parser')
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
             
-            # 1. وسوم الفيديو والمصادر المباشرة
-            for video in soup.find_all('video'):
-                if video.get('src'):
-                    return video['src']
-                for source in video.find_all('source'):
-                    if source.get('src'):
-                        return source['src']
-            
-            # 2. فحص وسوم الميتا og/twitter
-            for meta in soup.find_all('meta'):
-                prop = meta.get('property', '') or meta.get('name', '')
-                if prop in ['og:video', 'og:video:secure_url', 'twitter:player:stream']:
-                    if meta.get('content') and meta['content'].startswith("http"):
-                        return meta['content']
+            found_media_url = [None]
 
-            # 3. v5 Deep JS Scraper: استخراج روابط الفيديوهات المضمنة داخل كود الـ JS
-            script_matches = re.findall(r'https?://[^\s\'"]+\.(?:m3u8|mp4|webm)[^\s\'"]*', resp.text)
-            if script_matches:
-                return script_matches[0]
+            def handle_response(response):
+                if found_media_url[0]:
+                    return
+                res_url = response.url
+                if re.search(r'\.(mp4|m3u8|webm)(\?.*)?$', res_url, re.IGNORECASE):
+                    found_media_url[0] = res_url
+
+            page.on("response", handle_response)
+            page.goto(url, timeout=20000, wait_until="domcontentloaded")
+            page.wait_for_timeout(3000)
+            
+            browser.close()
+            return found_media_url[0]
     except Exception as e:
-        logger.warning(f"v5 Deep Scraper failed: {e}")
+        logger.warning(f"v6 Playwright Bypass failed/not installed: {e}")
     return None
 
 def format_eta(seconds: int) -> str:
@@ -117,7 +108,7 @@ def format_eta(seconds: int) -> str:
 
 def get_cancel_keyboard(task_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[
-        InlineKeyboardButton("❌ إلغاء العملية (v5 Quantum)", callback_data=f"cancel_{task_id}")
+        InlineKeyboardButton("❌ إلغاء العملية (v6 Ultra)", callback_data=f"cancel_{task_id}")
     ]])
 
 def render_progress_bar(percentage: float) -> str:
@@ -138,10 +129,10 @@ async def update_status_ui(message: Message, status_text: str, current: int, tot
     eta_seconds = round((total - current) / speed) if speed > 0 else 0
 
     text = (
-        f"⚛️ **[v5 Quantum] {status_text}**\n\n"
+        f"⚡ **[v6 Ultra-Bypass] {status_text}**\n\n"
         f"[{render_progress_bar(percentage)}] `{percentage:.1f}%`\n"
         f"📦 **الحجم:** `{current / (1024*1024):.1f}MB` / `{total / (1024*1024):.1f}MB`\n"
-        f"⚡ **السرعة:** `{speed / (1024*1024):.2f} MB/s`\n"
+        f"🚀 **السرعة:** `{speed / (1024*1024):.2f} MB/s`\n"
         f"⏱️ **المتبقي:** `{format_eta(eta_seconds)}`"
     )
 
@@ -159,7 +150,7 @@ def generate_ffmpeg_thumbnail(video_path: str, thumb_path: str) -> bool:
         return False
 
 # ----------------------------------------------------
-# 🧠 محرك الاستخراج - v5 Core Engine
+# 🧠 محرك الاستخراج - v6 Ultra Engine
 # ----------------------------------------------------
 
 def make_ytdl_opts(base_opts: dict, status_msg: Message, loop: asyncio.AbstractEventLoop, task_id: str, action_name: str):
@@ -184,13 +175,16 @@ def make_ytdl_opts(base_opts: dict, status_msg: Message, loop: asyncio.AbstractE
     opts = base_opts.copy()
     opts["progress_hooks"] = [hook]
     opts["concurrent_fragment_downloads"] = 10
-    opts["socket_timeout"] = 20
-    opts["retries"] = 5
-    opts["fragment_retries"] = 5
-    opts["ignoreerrors"] = True
+    opts["socket_timeout"] = 30
+    opts["retries"] = 10
+    
+    # تحميل الكوكيز تلقائياً إذا كانت موجودة
+    if COOKIES_FILE:
+        opts["cookiefile"] = COOKIES_FILE
+
     return opts
 
-async def smart_extractor_v5(url: str, status_msg: Message, task_id: str):
+async def smart_extractor_v6(url: str, status_msg: Message, task_id: str):
     loop = asyncio.get_event_loop()
 
     thumb_opts = {
@@ -199,15 +193,18 @@ async def smart_extractor_v5(url: str, status_msg: Message, task_id: str):
     }
 
     strategies = [
-        # استراتيجية 1: دعم التجاوز العميق لحظر السيرفرات ومحاكاة المتصفح الآمن v5
+        # 1. الاستراتيجية الأساسية لـ v6 مع دعم الـ Cookies والتخفي الكامل
         ({
             "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
             "outtmpl": f"downloads/{task_id}_s1.%(ext)s",
             "quiet": True, "geo_bypass": True, "nocheckcertificate": True,
-            "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
-            "headers": {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0.0.0 Safari/537.36"},
+            "extractor_args": {"youtube": {"player_client": ["tv", "android", "web"]}},
+            "headers": {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.9"
+            },
             **thumb_opts
-        }, "1/18: v5 Quantum Dual Client"),
+        }, "1/18: v6 Ultra Bypass Engine"),
 
         ({
             "format": "best",
@@ -350,7 +347,7 @@ async def smart_extractor_v5(url: str, status_msg: Message, task_id: str):
         if task_id in CANCELLED_TASKS:
             raise ProcessCancelledException("CANCELLED_BY_USER")
         try:
-            await update_status_ui(status_msg, f"فحص v5 Quantum ({idx}/18)...", 0, 100, time.time(), task_id)
+            await update_status_ui(status_msg, f"فحص v6 ({idx}/18)...", 0, 100, time.time(), task_id)
             
             opts = make_ytdl_opts(st_opts, status_msg, loop, task_id, f"تحميل الفيديو ({idx}/18)")
             def run_yt(target_url):
@@ -371,17 +368,17 @@ async def smart_extractor_v5(url: str, status_msg: Message, task_id: str):
             logger.warning(f"المحاولة {idx} لم تكتمل: {e}")
             continue
 
-    # 🚀 خطة التعزيز v5 Deep Quantum Scraper
+    # 🚀 خطة v6 Ultra Bypass: تشغيل متصفح Playwright الحقيقي في حال فشل كل البروتوكولات
     try:
-        await update_status_ui(status_msg, "⚛️ تشغيل v5 Deep Quantum Scraper...", 0, 100, time.time(), task_id)
-        scraped_url = await loop.run_in_executor(None, scrape_direct_video_link_v5, url)
+        await update_status_ui(status_msg, "🌐 تشغيل v6 Playwright Browser Bypass...", 0, 100, time.time(), task_id)
+        scraped_url = await loop.run_in_executor(None, scrape_with_playwright_v6, url)
         if scraped_url:
-            opts = make_ytdl_opts(strategies[8][0], status_msg, loop, task_id, "تحميل v5 Scraped Stream")
+            opts = make_ytdl_opts(strategies[8][0], status_msg, loop, task_id, "تحميل v6 Browser Stream")
             file_path, title, duration = await loop.run_in_executor(None, run_yt, scraped_url)
             if file_path and os.path.exists(file_path) and os.path.getsize(file_path) > 1000:
-                return file_path, title, duration, "⚛️ Deep Quantum Scraper v5"
+                return file_path, title, duration, "🌐 Playwright Browser Bypass v6"
     except Exception as e:
-        logger.error(f"فشلت خطة التعزيز v5: {e}")
+        logger.error(f"فشلت خطة Playwright v6: {e}")
 
     return None, None, 0, None
 
@@ -399,30 +396,32 @@ async def cancel_handler(client: Client, callback: CallbackQuery):
         if not task.done():
             task.cancel()
 
-    await callback.answer("🛑 تم إلغاء العملية فوراً!", show_alert=True)
+    await callback.answer("🛑 تم إلغاء العملية وتنظيف الملفات!", show_alert=True)
     cleanup_temp_files(task_id)
     try:
-        await callback.message.edit_text("❌ **تم إلغاء العملية وتنظيف الملفات بالكامل.**")
+        await callback.message.edit_text("❌ **تم إلغاء العملية وتنظيف الذاكرة المخصصة.**")
     except Exception:
         pass
 
 @app.on_message(filters.command("start") & filters.private)
 async def start_cmd(client: Client, message: Message):
-    await message.reply_text("⚛️ **أهلاً بك في الإصدار v5 Quantum**\n\nأرسل رابط الفيديو المعقد الآن لبدء الاستخراج وتجاوز قيود السيرفرات.")
+    status_cookies = "مفعل 🍪" if COOKIES_FILE else "غير مفعل (قم بإضافة cookies.txt للتخصيص)"
+    await message.reply_text(f"⚡ **أهلاً بك في الإصدار v6 Ultra-Bypass**\n\nنظام الكوكيز: `{status_cookies}`\n\nأرسل رابط الفيديو المعقد لبدء معالجته الآن.")
 
 @app.on_message(filters.command("stats") & filters.private)
 async def stats_cmd(client: Client, message: Message):
     uptime_sec = int(time.time() - START_TIME)
     active_count = len(ACTIVE_TASKS)
     await message.reply_text(
-        f"📊 **إحصائيات البوت v5 Quantum:**\n\n"
+        f"📊 **إحصائيات البوت v6 Ultra-Bypass:**\n\n"
         f"⏱️ **مدة التشغيل:** `{format_eta(uptime_sec)}`\n"
-        f"🔄 **المهام الشغالة حالياً:** `{active_count}`"
+        f"🔄 **المهام الشغالة حالياً:** `{active_count}`\n"
+        f"🍪 **حالة الكوكيز:** `{'موجود' if COOKIES_FILE else 'غير موجود'}`"
     )
 
 async def process_download(client: Client, message: Message, task_id: str, url: str):
     status_msg = await message.reply_text(
-        "⏳ **[v5 Quantum] جاري فحص الرابط ومعالجة الحماية...**",
+        "⏳ **[v6 Ultra] جاري فحص الحماية وبدء الاستخراج...**",
         reply_markup=get_cancel_keyboard(task_id)
     )
 
@@ -430,7 +429,7 @@ async def process_download(client: Client, message: Message, task_id: str, url: 
     thumb_path = None
 
     try:
-        file_path, title, duration, used_method = await smart_extractor_v5(url, status_msg, task_id)
+        file_path, title, duration, used_method = await smart_extractor_v6(url, status_msg, task_id)
 
         if task_id in CANCELLED_TASKS:
             raise ProcessCancelledException("CANCELLED_BY_USER")
@@ -467,12 +466,17 @@ async def process_download(client: Client, message: Message, task_id: str, url: 
                 video=file_path,
                 thumb=thumb_path if thumb_path and os.path.exists(thumb_path) else None,
                 duration=int(duration) if duration else 0,
-                caption=f"🎬 **{title}**\n⚡ **الطريقة:** `{used_method}`\n⚛️ **Engine:** `v5 Quantum`",
+                caption=f"🎬 **{title}**\n⚡ **الطريقة:** `{used_method}`\n🚀 **Engine:** `v6 Ultra-Bypass`",
                 progress=upload_progress
             )
             await status_msg.delete()
         else:
-            await status_msg.edit_text("❌ **فشلت كافة محاولات v5 Quantum. يبدو أن الرابط يتطلب تسجيل دخول أو حماية خاصة جداً.**")
+            await status_msg.edit_text(
+                "❌ **تعذر استخراج الفيديو.**\n\n"
+                "💡 **حلول مقترحة:**\n"
+                "1. إذا كان الفيديو خاصاً أو يتطلب اشتراك، قم بإضافة ملف `cookies.txt` داخل مجلد البوت.\n"
+                "2. تأكد من تثبيت متصفح Playwright إذا كان الرابط يعتمد على جافا سكربت معقدة (`playwright install chromium`)."
+            )
 
     except (asyncio.CancelledError, ProcessCancelledException):
         logger.info(f"🛑 تم إيقاف المهمة بنجاح: {task_id}")
@@ -501,5 +505,5 @@ if __name__ == "__main__":
     if not os.path.exists("downloads"):
         os.makedirs("downloads")
     
-    logger.info("🚀 تم تشغيل محرك v5 Quantum بنجاح...")
+    logger.info("🚀 تم تشغيل محرك v6 Ultra-Bypass بنجاح...")
     app.run()
