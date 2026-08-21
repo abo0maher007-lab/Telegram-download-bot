@@ -2,3 +2,6 @@ requests
 tenacity
 yt-dlp
 beautifulsoup4
+pyrogram
+tgcrypto
+urllib3
