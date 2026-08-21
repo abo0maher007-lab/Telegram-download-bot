@@ -1,7 +1,8 @@
+pyrogram
+tgcrypto
 requests
 tenacity
 yt-dlp
 beautifulsoup4
-pyrogram
-tgcrypto
+curl_cffi
 urllib3
