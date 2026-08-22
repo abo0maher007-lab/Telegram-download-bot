@@ -6,3 +6,4 @@ yt-dlp
 beautifulsoup4
 curl_cffi
 urllib3
+mega.py
