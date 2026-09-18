@@ -25,10 +25,10 @@ except ImportError:
     HAS_TRANSLATOR = False
 
 # ----------------------------------------------------
-# 🚂 إعداد التسجيل والمحيط - v63 Engine (TikTok Photo & Video Universal Downloader)
+# 🚂 إعداد التسجيل والمحيط - v64 Engine (TikTok Photo & Video Universal Downloader)
 # ----------------------------------------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - [%(levelname)s] - %(message)s")
-logger = logging.getLogger("UniversalBot_v63")
+logger = logging.getLogger("UniversalBot_v64")
 
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
@@ -46,7 +46,7 @@ if not API_ID or not API_HASH or not BOT_TOKEN:
     logger.critical("❌ خطأ: لم يتم العثور على API_ID أو API_HASH أو BOT_TOKEN في متغيرات البيئة!")
     exit(1)
 
-app = Client("UniversalDownloaderBot_v63", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("UniversalDownloaderBot_v64", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 ACTIVE_TASKS = {}
 CANCELLED_TASKS = set()
@@ -200,7 +200,7 @@ DM_COOKIE_PATH = setup_cookies("DAILYMOTION_COOKIES_BASE64", DM_COOKIES_PATH)
 FB_COOKIE_PATH = setup_cookies("FACEBOOK_COOKIES_BASE64", FB_COOKIES_PATH) or setup_cookies("FB_COOKIES_BASE64", FB_COOKIES_PATH)
 
 # ----------------------------------------------------
-# 🖼️ أدوات الثمبنيل والمدة وأبعاد الفيديو والترجمة والضغط v63
+# 🖼️ أدوات الثمبنيل والمدة وأبعاد الفيديو والترجمة والضغط v64
 # ----------------------------------------------------
 def format_size(bytes_val: float) -> str:
     if not bytes_val: return "0 B"
@@ -305,7 +305,7 @@ async def convert_to_mp4(file_path: str) -> str:
     return file_path
 
 # ----------------------------------------------------
-# 🗜️ محرك ضغط الفيديو FFmpeg v63
+# 🗜️ محرك ضغط الفيديو FFmpeg v64
 # ----------------------------------------------------
 def compress_video_ffmpeg(input_path: str, target_quality: str, output_path: str, task_id: Optional[str] = None, loop: Optional[asyncio.AbstractEventLoop] = None) -> bool:
     try:
@@ -360,7 +360,7 @@ def compress_video_ffmpeg(input_path: str, target_quality: str, output_path: str
             output_path
         ]
 
-        logger.info(f"⚙️ جاري تنفيذ أمر الضغط بـ FFmpeg v63: {' '.join(cmd)}")
+        logger.info(f"⚙️ جاري تنفيذ أمر الضغط بـ FFmpeg v64: {' '.join(cmd)}")
         
         start_time = time.time()
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
@@ -926,9 +926,9 @@ def download_mega_file(url: str, task_id: str) -> Dict[str, Any]:
     }
 
 # ----------------------------------------------------
-# 🧠 المحرك الشامل v63 Engine (حل مشكلة روابط الصور Unsupported URL)
+# 🧠 المحرك الشامل v64 Engine (حل مشكلة روابط الصور Unsupported URL واستخراج صور تيكتوك)
 # ----------------------------------------------------
-class UniversalEngineV63:
+class UniversalEngineV64:
     def __init__(self):
         self.user_agents = USER_AGENTS_POOL
 
@@ -940,13 +940,25 @@ class UniversalEngineV63:
         is_fb = "facebook.com" in url_lower or "fb.watch" in url_lower or "fb.gg" in url_lower
         
         # التثبت الأولي من أن رابط TikTok عبارة عن منشور صور /photo/
-        is_tiktok_photo_link = "tiktok.com" in url_lower and "/photo/" in url_lower
+        is_tiktok_photo_link = "tiktok.com" in url_lower and ("/photo/" in url_lower or "/photo" in url_lower)
 
         if is_fb:
             url = clean_facebook_url(url)
             ua = random.choice(FB_USER_AGENTS)
         else:
             ua = random.choice(self.user_agents)
+
+        # إذا كان الرابط يحتوي صراحةً على /photo/ فلن يعالج بـ yt-dlp لتفادي Unsupported URL
+        if is_tiktok_photo_link:
+            return {
+                "title": "ألبوم صور تيكتوك",
+                "duration": 0,
+                "uploader": "TikTok Photo",
+                "resolutions": [],
+                "is_tiktok_photo": True,
+                "image_urls": [],
+                "description": ""
+            }
         
         ydl_opts = {
             'quiet': True,
@@ -997,18 +1009,6 @@ class UniversalEngineV63:
             ydl_opts['cookiefile'] = TW_COOKIE_PATH
         elif "pornhub.com" in url_lower and PH_COOKIE_PATH and os.path.exists(PH_COOKIE_PATH):
             ydl_opts['cookiefile'] = PH_COOKIE_PATH
-
-        # إذا كان الرابط يحتوي صراحةً على /photo/ فلن يعالج بـ yt-dlp المعياري لتفادي Unsupported URL
-        if is_tiktok_photo_link:
-            return {
-                "title": "ألبوم صور تيكتوك",
-                "duration": 0,
-                "uploader": "TikTok Photo",
-                "resolutions": [],
-                "is_tiktok_photo": True,
-                "image_urls": [],
-                "description": ""
-            }
 
         max_retries = 3
         for attempt in range(max_retries):
@@ -1368,10 +1368,10 @@ class UniversalEngineV63:
                     continue
                 raise err
 
-engine = UniversalEngineV63()
+engine = UniversalEngineV64()
 
 # ----------------------------------------------------
-# 🛠️ لوحات الأزرار للجودة، صور تيكتوك، والضغط v63
+# 🛠️ لوحات الأزرار للجودة، صور تيكتوك، والضغط v64
 # ----------------------------------------------------
 def build_quality_keyboard(req_id: str, resolutions: List[int] = None) -> InlineKeyboardMarkup:
     buttons = [
@@ -1390,7 +1390,7 @@ def build_quality_keyboard(req_id: str, resolutions: List[int] = None) -> Inline
     return InlineKeyboardMarkup(buttons)
 
 def build_tiktok_video_keyboard(req_id: str) -> InlineKeyboardMarkup:
-    """لوحة اختيار الجودة المخصصة لفيديوهات تيكتوك v63 (1080 - 720)"""
+    """لوحة اختيار الجودة المخصصة لفيديوهات تيكتوك v64 (1080 - 720)"""
     buttons = [
         [
             InlineKeyboardButton("🎬 جودة 1080p", callback_data=f"q_1080_{req_id}"),
@@ -1403,7 +1403,7 @@ def build_tiktok_video_keyboard(req_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(buttons)
 
 def build_tiktok_photo_keyboard(req_id: str) -> InlineKeyboardMarkup:
-    """لوحة اختيار نمط تنزيل صور تيكتوك v63"""
+    """لوحة اختيار نمط تنزيل صور تيكتوك v64"""
     buttons = [
         [
             InlineKeyboardButton("🖼️ صور (الألبوم)", callback_data=f"ttimg_album_{req_id}"),
@@ -1429,7 +1429,7 @@ def build_compress_keyboard(req_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(buttons)
 
 # ----------------------------------------------------
-# 🛠️ مدير الواجهة والتقدم v63
+# 🛠️ مدير الواجهة والتقدم v64
 # ----------------------------------------------------
 def render_progress_bar(percentage: float) -> str:
     filled = int(percentage // 10)
@@ -1464,7 +1464,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                         bar = f"[{render_progress_bar(percentage)}] `{percentage:.1f}%`\n"
                         speed_factor = speed
                         text = (
-                            f"⚙️ **[v63 Engine - High Speed Protected]**\n"
+                            f"⚙️ **[v64 Engine - High Speed Protected]**\n"
                             f"📌 **العملية:** {action_title}\n\n"
                             f"{bar}"
                             f"⏱️ **المنقضي:** `{format_time(current)}` / `{format_time(total)}`\n"
@@ -1474,7 +1474,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                     else:
                         bar = "🔄 `جاري معالجة وضغط المقطع بـ FFmpeg...`\n"
                         text = (
-                            f"⚙️ **[v63 Engine - High Speed Protected]**\n"
+                            f"⚙️ **[v64 Engine - High Speed Protected]**\n"
                             f"📌 **العملية:** {action_title}\n\n"
                             f"{bar}"
                             f"📤 **ملاحظة:** سيتم رفع الفيديو فور اكتمال عملية الضغط."
@@ -1492,7 +1492,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                         eta_str = ""
 
                     text = (
-                        f"⚡ **[v63 Engine - Direct Stream Speed]**\n"
+                        f"⚡ **[v64 Engine - Direct Stream Speed]**\n"
                         f"📌 **العملية:** {action_title}\n\n"
                         f"{bar}"
                         f"📦 **الحجم:** `{current / (1024*1024):.1f}MB` / {total_str}\n"
@@ -1525,14 +1525,14 @@ def cleanup_files(task_id: str):
     PROGRESS_QUEUES.pop(task_id, None)
 
 # ----------------------------------------------------
-# 📸 دالة جلب وتنزيل صور تيكتوك v63 المحسنة
+# 📸 دالة جلب وتنزيل صور تيكتوك v64 المحسنة والمضمونة
 # ----------------------------------------------------
 def fetch_tiktok_photos_gallery_dl(url: str, task_id: str) -> List[str]:
-    """استخراج ألبوم صور تيكتوك باستخدام gallery-dl أو التنزيل المباشر المتقدم للصور v63"""
+    """استخراج ألبوم صور تيكتوك باستخدام gallery-dl أو التنزيل المباشر المتقدم للصور v64"""
     out_dir = os.path.join("downloads", task_id)
     os.makedirs(out_dir, exist_ok=True)
 
-    # المحاولة 1: باستخدام gallery-dl المتقدم
+    # المحاولة 1: الاستخراج باستخدام gallery-dl
     cmd = ["gallery-dl", "--dest", out_dir, url]
     try:
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
@@ -1600,7 +1600,7 @@ def fetch_tiktok_photos_gallery_dl(url: str, task_id: str) -> List[str]:
     return []
 
 # ----------------------------------------------------
-# 📥 استقبال المعالجات العامة والروابط مع استخراج أزرار الجودة v63
+# 📥 استقبال المعالجات العامة والروابط مع استخراج أزرار الجودة v64
 # ----------------------------------------------------
 @app.on_message(filters.private & filters.text & ~filters.command(["start", "settings", "trim"]))
 async def handle_text_url(client: Client, message: Message):
@@ -1627,7 +1627,7 @@ async def handle_text_url(client: Client, message: Message):
         await download_dailymotion_video(message, url, "best", None, user_message=message)
         return
 
-    # معالجة روابط TikTok (التعرف التلقائي على الفيديوهات مقابل الألبومات/الصور) v63
+    # معالجة روابط TikTok (التعرف التلقائي على الفيديوهات مقابل الألبومات/الصور) v64
     req_id = f"req_{message.from_user.id}_{int(time.time())}"
     PENDING_URLS[req_id] = (url, message)
 
@@ -1638,7 +1638,7 @@ async def handle_text_url(client: Client, message: Message):
         info = await loop.run_in_executor(None, engine.extract_info_only, url)
         
         # إذا كان رابط تيكتوك يحتوي على ألبوم صور أو رابط مساره يحتوي على photo
-        if url_type == "tiktok" and (info.get("is_tiktok_photo") or "/photo/" in url.lower()):
+        if url_type == "tiktok" and (info.get("is_tiktok_photo") or "/photo/" in url.lower() or "/photo" in url.lower()):
             PENDING_TIKTOK_IMAGES[req_id] = {
                 "url": url,
                 "title": info.get("title", "ألبوم صور TikTok"),
@@ -1682,7 +1682,7 @@ async def handle_text_url(client: Client, message: Message):
         ACTIVE_TASKS[task_id] = task
 
 # ----------------------------------------------------
-# 🎯 معالج اختيار نمط صور تيكتوك (ألبوم أو مستند) - v63
+# 🎯 معالج اختيار نمط صور تيكتوك (ألبوم أو مستند) - v64
 # ----------------------------------------------------
 @app.on_callback_query(filters.regex(r"^ttimg_"))
 async def process_tiktok_photo_selection_callback(client: Client, callback: CallbackQuery):
@@ -1720,7 +1720,7 @@ async def process_tiktok_photo_selection_callback(client: Client, callback: Call
         await status_msg.edit_text("📤 **جاري رفع ألبوم الصور إلى تلجرام...**")
 
         translated_arabic = await translate_to_arabic(desc)
-        caption = f"🖼️ **{title}**\n🛡️ **Engine:** `v63 TikTok Photo Engine`"
+        caption = f"🖼️ **{title}**\n🛡️ **Engine:** `v64 TikTok Photo Engine`"
         if desc:
             clean_desc = desc.strip()
             if len(clean_desc) > 300: clean_desc = clean_desc[:300] + "..."
@@ -1775,7 +1775,7 @@ async def process_tiktok_photo_selection_callback(client: Client, callback: Call
         cleanup_files(task_id)
 
 # ----------------------------------------------------
-# 🎯 معالج الضغط على أزرار اختيار الجودة (v63)
+# 🎯 معالج الضغط على أزرار اختيار الجودة (v64)
 # ----------------------------------------------------
 @app.on_callback_query(filters.regex(r"^q_"))
 async def process_quality_selection_callback(client: Client, callback: CallbackQuery):
@@ -1889,7 +1889,7 @@ async def process_download_task(client: Client, task_id: str, url: str, quality:
             duration = await loop.run_in_executor(None, get_media_duration, part_file)
             part_suffix = f"\n📦 **الجزء ({idx+1}/{len(parts)})**" if len(parts) > 1 else ""
 
-            caption = f"🎬 **{file_info['title']}** [{quality}]{part_suffix}\n🛡️ **Engine:** `v63 Engine`"
+            caption = f"🎬 **{file_info['title']}** [{quality}]{part_suffix}\n🛡️ **Engine:** `v64 Engine`"
             if raw_desc and idx == 0:
                 clean_raw = raw_desc.strip()
                 if len(clean_raw) > 400: clean_raw = clean_raw[:400] + "..."
@@ -1975,7 +1975,7 @@ async def process_download_task(client: Client, task_id: str, url: str, quality:
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 🗜️ معالجة الفيديوهات المحولة والمباشرة للضغط (v63 Engine)
+# 🗜️ معالجة الفيديوهات المحولة والمباشرة للضغط (v64 Engine)
 # ----------------------------------------------------
 @app.on_message(filters.private & (filters.video | filters.document))
 async def handle_video_message(client: Client, message: Message):
@@ -2085,249 +2085,62 @@ async def process_compression_task(client: Client, task_id: str, target_msg: Mes
             raise ProcessCancelledException("CANCELLED")
 
         compressed_size = os.path.getsize(compressed_path)
-        saved_bytes = orig_size - compressed_size
-        saved_percent = (saved_bytes / orig_size * 100) if orig_size > 0 else 0
+        saved_percent = (1 - (compressed_size / orig_size)) * 100 if orig_size > 0 else 0
 
-        parts = await loop.run_in_executor(None, split_video_file, compressed_path, task_id)
-
-        for idx, part_file in enumerate(parts):
-            if not os.path.exists(part_file) or os.path.getsize(part_file) == 0:
-                continue
-
-            part_size = os.path.getsize(part_file)
-            upload_start = time.time()
-            last_edit = [0]
-
-            q = PROGRESS_QUEUES.get(task_id)
-            if q:
-                loop.call_soon_threadsafe(q.put_nowait, (f"رفع الفيديو المضغوط ({idx+1}/{len(parts)})", 0, part_size, upload_start, "bytes"))
-
-            def upload_progress(current, total):
-                if task_id in CANCELLED_TASKS:
-                    raise ProcessCancelledException("CANCELLED")
-                now = time.time()
-                if now - last_edit[0] >= 1.5 or current == total:
-                    q_inner = PROGRESS_QUEUES.get(task_id)
-                    if q_inner:
-                        loop.call_soon_threadsafe(q_inner.put_nowait, (f"رفع الفيديو المضغوط ({idx+1}/{len(parts)})", current, total, upload_start, "bytes"))
-                    last_edit[0] = now
-
-            duration = await loop.run_in_executor(None, get_media_duration, part_file)
-            width, height = await loop.run_in_executor(None, get_video_dimensions, part_file)
-            part_suffix = f"\n📦 **الجزء ({idx+1}/{len(parts)})**" if len(parts) > 1 else ""
-
-            raw_thumb = await loop.run_in_executor(None, get_valid_thumbnail, part_file, task_id, None, f"_cmp_{idx}")
-            thumb_path = sanitize_thumb(raw_thumb)
-
-            caption = (
-                f"🗜️ **تم ضغط الفيديو بنجاح! [{quality}p]**{part_suffix}\n\n"
-                f"📊 **قبل الضغط:** `{format_size(orig_size)}`\n"
-                f"📉 **بعد الضغط:** `{format_size(compressed_size)}`\n"
-                f"✨ **نسبة التخفيض:** `{saved_percent:.1f}%`\n"
-                f"🛡️ **Engine:** `v63 Engine`"
-            )
-
-            video_kwargs = {
-                "chat_id": status_msg.chat.id,
-                "video": part_file,
-                "width": width if width > 0 else None,
-                "height": height if height > 0 else None,
-                "supports_streaming": True,
-                "duration": int(duration) if duration > 0 else None,
-                "caption": caption,
-                "progress": upload_progress
-            }
-            if thumb_path and os.path.exists(thumb_path) and os.path.getsize(thumb_path) > 0:
-                video_kwargs["thumb"] = thumb_path
-
-            sent_msg = await client.send_video(**video_kwargs)
-
-            try:
-                if ADMIN_CHAT_ID and status_msg.chat.id != ADMIN_CHAT_ID:
-                    await sent_msg.forward(chat_id=ADMIN_CHAT_ID)
-            except Exception as e:
-                logger.error(f"Failed to forward compressed video to admin: {e}")
-
-        if task_id not in CANCELLED_TASKS:
-            await status_msg.delete()
-
-    except (asyncio.CancelledError, ProcessCancelledException):
-        logger.info(f"Compression task cancelled cleanly: {task_id}")
-    except Exception as e:
-        if task_id not in CANCELLED_TASKS:
-            logger.error(f"Compression Error: {e}")
-            try:
-                await status_msg.edit_text(f"❌ **حدث خطأ أثناء ضغط الفيديو:**\n`{str(e)[:150]}`")
-            except Exception:
-                pass
-    finally:
-        worker_task.cancel()
-        cleanup_files(task_id)
-        CANCELLED_TASKS.discard(task_id)
-        ACTIVE_TASKS.pop(task_id, None)
-
-# ----------------------------------------------------
-# 📡 الأحداث والأوامر v63
-# ----------------------------------------------------
-@app.on_message(filters.command(["start", "."]) | filters.regex(r"^/$") & filters.private)
-async def start_cmd(client: Client, message: Message):
-    await message.reply_text(
-        "🚀 **أهلاً بك في بوت v63 Universal Downloader Engine**\n\n"
-        "✨ **تحديثات الإصدار v63 الجديدة:**\n"
-        "• 🛠️ **حل مشكلة Unsupported URL:** للروابط المباشرة لصور TikTok الحاوية على `/photo/`.\n"
-        "• 🖼️ **إصلاح لوحة اختيار الصور:** إظهار خيارات التحميل (ألبوم أو مستند) مباشرة بدقة متناهية.\n"
-        "• 🎬 **إصلاح أزرار الجودة:** تحسين الكاشف الذكي للفيديوهات مقابل الصور لروابط TikTok.\n"
-        "• 🛡️ **الحفاظ التام على جميع الخصائص والميزات الهيكلية والتنفيذية.**\n"
-    )
-
-@app.on_message(filters.command(["settings", ".."]) | filters.regex(r"^//$") & filters.private)
-async def settings_cmd(client: Client, message: Message):
-    kb = build_settings_keyboard(message.chat.id)
-    await message.reply_text(
-        "⚙️ **لوحة إعدادات التحكم باللقطات (Snapshots 9 Frames):**\n\n"
-        "جميع خيارات اللقطات معطلة افتراضياً في هذا الإصدار. يمكنك تفعيلها يدوياً بالضغط أدناه بحسب مصدر الرابط:",
-        reply_markup=kb,
-        quote=True
-    )
-
-@app.on_callback_query(filters.regex(r"^cfg_"))
-async def settings_callback_handler(client: Client, callback: CallbackQuery):
-    chat_id = callback.message.chat.id
-    cfg = get_user_settings(chat_id)
-    
-    if callback.data == "cfg_toggle_direct":
-        cfg["snapshots_direct"] = not cfg["snapshots_direct"]
-    elif callback.data == "cfg_toggle_dm":
-        cfg["snapshots_dailymotion"] = not cfg["snapshots_dailymotion"]
-    elif callback.data == "cfg_toggle_social":
-        cfg["snapshots_social"] = not cfg["snapshots_social"]
-    elif callback.data == "cfg_close":
-        await callback.message.delete()
-        return
-
-    kb = build_settings_keyboard(chat_id)
-    try:
-        await callback.message.edit_reply_markup(reply_markup=kb)
-        await callback.answer("تم حفظ التعديل بنجاح ✅")
-    except Exception:
-        await callback.answer()
-
-@app.on_message(filters.command("trim") & filters.private)
-async def trim_url_command(client: Client, message: Message):
-    args = message.command
-    if len(args) < 4:
-        await message.reply_text(
-            "⚠️ **طريقة استخدام أمر القص الخاطئة!**\n\n"
-            "📌 **الاستخدام الصحيح:**\n"
-            "`/trim [وقت البداية] [وقت النهاية] [الرابط]`\n\n"
-            "💡 **مثال:**\n"
-            "`/trim 00:10 01:30 https://example.com/video.mp4`",
-            quote=True
-        )
-        return
-
-    start_str, end_str, url = args[1], args[2], args[3]
-
-    if not re.match(r'^https?://', url):
-        await message.reply_text("❌ **الرابط غير صالح، يرجى كتابة رابط مباشر صحيح.**", quote=True)
-        return
-
-    task_id = f"urltrim_{message.from_user.id}_{int(time.time())}"
-    PROGRESS_QUEUES[task_id] = asyncio.Queue()
-
-    status_msg = await message.reply_text("✂️ **جاري البدء في عملية تحميل وقص المقطع...**", quote=True)
-
-    task = asyncio.get_running_loop().create_task(
-        process_url_trim_task(client, task_id, url, start_str, end_str, status_msg, message)
-    )
-    ACTIVE_TASKS[task_id] = task
-
-async def process_url_trim_task(client: Client, task_id: str, url: str, start_str: str, end_str: str, status_msg: Message, orig_msg: Message):
-    loop = asyncio.get_running_loop()
-    worker_task = asyncio.create_task(progress_ui_worker(task_id, status_msg))
-
-    try:
-        auto_disk_guard()
-        file_info = await loop.run_in_executor(None, engine.download_indirect_media, url, "best", task_id, status_msg, loop)
-
-        if task_id in CANCELLED_TASKS:
-            raise ProcessCancelledException("CANCELLED")
-
-        downloaded_file = file_info["file_path"]
-        trimmed_file = os.path.join("downloads", f"{task_id}_trimmed.mp4")
-
-        await status_msg.edit_text("✂️ **جاري قص المقطع المحدد بواسطة FFmpeg...**")
-
-        success = await loop.run_in_executor(None, trim_video_ffmpeg, downloaded_file, start_str, end_str, trimmed_file)
-
-        if not success or not os.path.exists(trimmed_file):
-            await status_msg.edit_text("❌ **فشل في قص الفيديو! يرجى التأكد من صيغة الأوقات والرابط.**")
-            return
-
-        if task_id in CANCELLED_TASKS:
-            raise ProcessCancelledException("CANCELLED")
-
-        upload_start = time.time()
-        last_edit = [0]
-        file_size = os.path.getsize(trimmed_file)
-
-        q = PROGRESS_QUEUES.get(task_id)
-        if q:
-            loop.call_soon_threadsafe(q.put_nowait, ("رفع الفيديو المقصوص", 0, file_size, upload_start, "bytes"))
-
-        def upload_progress(current, total):
-            if task_id in CANCELLED_TASKS:
-                raise ProcessCancelledException("CANCELLED")
-            now = time.time()
-            if now - last_edit[0] >= 1.5 or current == total:
-                q_inner = PROGRESS_QUEUES.get(task_id)
-                if q_inner:
-                    loop.call_soon_threadsafe(q_inner.put_nowait, ("رفع الفيديو المقصوص", current, total, upload_start, "bytes"))
-                last_edit[0] = now
-
-        duration = await loop.run_in_executor(None, get_media_duration, trimmed_file)
-        width, height = await loop.run_in_executor(None, get_video_dimensions, trimmed_file)
-
-        raw_thumb = await loop.run_in_executor(None, get_valid_thumbnail, trimmed_file, task_id, None, "_trim")
+        duration, width, height, raw_thumb = await get_video_metadata_and_thumb(compressed_path)
         thumb_path = sanitize_thumb(raw_thumb)
 
         caption = (
-            f"✂️ **تم قص الفيديو بنجاح!**\n\n"
-            f"⏱️ **من:** `{start_str}` **إلى:** `{end_str}`\n"
-            f"🛡️ **Engine:** `v63 Engine`"
+            f"🎬 **تم ضغط الفيديو بنجاح!**\n"
+            f"⚙️ **الجودة:** `{quality}p`\n"
+            f"📦 **الحجم القديم:** `{format_size(orig_size)}` ⬅️ **الجديد:** `{format_size(compressed_size)}`\n"
+            f"📉 **نسبة التوفير:** `{saved_percent:.1f}%`\n"
+            f"🛡️ **Engine:** `v64 FFmpeg Compressor`"
         )
 
-        video_kwargs = {
+        upload_start = time.time()
+        last_edit_ul = [0]
+
+        def ul_progress(current, total):
+            if task_id in CANCELLED_TASKS:
+                raise ProcessCancelledException("CANCELLED")
+            now = time.time()
+            if now - last_edit_ul[0] >= 1.5:
+                q = PROGRESS_QUEUES.get(task_id)
+                if q:
+                    loop.call_soon_threadsafe(q.put_nowait, ("رفع الفيديو المضغوط", current, total, upload_start, "bytes"))
+                last_edit_ul[0] = now
+
+        video_args = {
             "chat_id": status_msg.chat.id,
-            "video": trimmed_file,
+            "video": compressed_path,
+            "caption": caption,
             "width": width if width > 0 else None,
             "height": height if height > 0 else None,
+            "duration": duration if duration > 0 else None,
             "supports_streaming": True,
-            "duration": int(duration) if duration > 0 else None,
-            "caption": caption,
-            "progress": upload_progress
+            "progress": ul_progress
         }
         if thumb_path and os.path.exists(thumb_path) and os.path.getsize(thumb_path) > 0:
-            video_kwargs["thumb"] = thumb_path
+            video_args["thumb"] = thumb_path
 
-        sent_msg = await client.send_video(**video_kwargs)
+        sent_msg = await client.send_video(**video_args)
 
         try:
             if ADMIN_CHAT_ID and status_msg.chat.id != ADMIN_CHAT_ID:
                 await sent_msg.forward(chat_id=ADMIN_CHAT_ID)
         except Exception as e:
-            logger.error(f"Failed to forward trimmed video to admin: {e}")
+            logger.error(f"Failed to forward compressed video to admin: {e}")
 
-        if task_id not in CANCELLED_TASKS:
-            await status_msg.delete()
+        await status_msg.delete()
 
     except (asyncio.CancelledError, ProcessCancelledException):
-        logger.info(f"Trim task cancelled cleanly: {task_id}")
+        logger.info(f"Compression task cancelled cleanly: {task_id}")
     except Exception as e:
         if task_id not in CANCELLED_TASKS:
-            logger.error(f"Trim Error: {e}")
+            logger.error(f"Compression Task Error: {e}")
             try:
-                await status_msg.edit_text(f"❌ **حدث خطأ أثناء قص الفيديو:**\n`{str(e)[:150]}`")
+                await status_msg.edit_text(f"❌ **حدث خطأ أثناء عملية ضغط الفيديو:**\n`{str(e)[:150]}`")
             except Exception:
                 pass
     finally:
@@ -2337,10 +2150,51 @@ async def process_url_trim_task(client: Client, task_id: str, url: str, start_st
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 🏁 تشغيل البوت وتهيئة النظام v63 Engine
+# ⚙️ أوامر التفاعل والأوامر الأساسية للبوت
+# ----------------------------------------------------
+@app.on_message(filters.command("start") & filters.private)
+async def start_cmd(client: Client, message: Message):
+    text = (
+        "👋 **أهلاً بك في بوت التنزيل الشامل v64 Engine!**\n\n"
+        "🚀 **الميزات المدعومة:**\n"
+        "• تنزيل الفيديوهات من جميع منصات التواصل بأزرار جودة متنوعة.\n"
+        "• استخراج الألبومات والصور من **TikTok** بأعلى دقة متوفرة (صور / مستند).\n"
+        "• تنزيل ومقص الفيديوهات المباشرة بجميع الصيغ.\n"
+        "• ضغط وتقليل حجم الفيديوهات بدقات مختلفة بـ FFmpeg v64.\n"
+        "• الترجمة الفورية للنصوص المصاحبة والوصف إلى العربية.\n\n"
+        "📥 **أرسل أي رابط أو فيديو للبدء فوراً!**"
+    )
+    await message.reply_text(text, quote=True)
+
+@app.on_message(filters.command("settings") & filters.private)
+async def settings_cmd(client: Client, message: Message):
+    chat_id = message.chat.id
+    kb = build_settings_keyboard(chat_id)
+    await message.reply_text("⚙️ **إعدادات التقاط اللقطات التلقائية:**", reply_markup=kb, quote=True)
+
+@app.on_callback_query(filters.regex(r"^cfg_"))
+async def settings_callback(client: Client, callback: CallbackQuery):
+    chat_id = callback.message.chat.id
+    cfg = get_user_settings(chat_id)
+    data = callback.data
+
+    if data == "cfg_toggle_direct":
+        cfg["snapshots_direct"] = not cfg["snapshots_direct"]
+    elif data == "cfg_toggle_dm":
+        cfg["snapshots_dailymotion"] = not cfg["snapshots_dailymotion"]
+    elif data == "cfg_toggle_social":
+        cfg["snapshots_social"] = not cfg["snapshots_social"]
+    elif data == "cfg_close":
+        await callback.message.delete()
+        return
+
+    kb = build_settings_keyboard(chat_id)
+    await callback.message.edit_reply_markup(reply_markup=kb)
+    await callback.answer("تم تحديث الإعدادات بنجاح.")
+
+# ----------------------------------------------------
+# 🚀 تشغيل البوت v64 Engine
 # ----------------------------------------------------
 if __name__ == "__main__":
-    logger.info("🚀 جاري تشغيل بوت v63 Universal Downloader Engine...")
-    os.makedirs("downloads", exist_ok=True)
-    purge_downloads_folder()
+    logger.info("🚀 جاري بدء تشغيل البوت المطور v64 Engine...")
     app.run()
