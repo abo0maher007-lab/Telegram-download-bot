@@ -3,6 +3,10 @@ pyrogram
 tgcrypto
 requests
 tenacity
-yt-dlp
+# Latest yt-dlp includes the current Cloudflare/impersonation support.
+yt-dlp[default]
 beautifulsoup4
+# Required by yt-dlp for browser impersonation (generic:impersonate).
 curl_cffi
+# Optional fallback used by some yt-dlp impersonation profiles.
+websockets
