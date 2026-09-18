@@ -3,6 +3,7 @@ pyrogram
 tgcrypto
 requests
 tenacity
+# Upgrade to current yt-dlp with Cloudflare impersonation support.
 yt-dlp[default]
 beautifulsoup4
 curl_cffi
