@@ -3,8 +3,7 @@ pyrogram
 tgcrypto
 requests
 tenacity
-# Current yt-dlp with browser impersonation support
-yt-dlp[default]
+yt-dlp
 beautifulsoup4
 curl_cffi
 websockets
