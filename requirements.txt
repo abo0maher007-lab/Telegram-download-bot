@@ -1,4 +1,5 @@
 aiohttp
+telethon
 pyrogram
 tgcrypto
 requests
