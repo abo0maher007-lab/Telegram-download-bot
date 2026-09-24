@@ -26,10 +26,10 @@ except ImportError:
     HAS_TRANSLATOR = False
 
 # ----------------------------------------------------
-# 🚂 إعداد التسجيل والمحيط - v62.5 Engine (HLS/m3u8 & BunnyCDN Support)
+# 🚂 إعداد التسجيل والمحيط - v63s Anti-Block Engine
 # ----------------------------------------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - [%(levelname)s] - %(message)s")
-logger = logging.getLogger("UniversalBot_v62_5")
+logger = logging.getLogger("UniversalBot_v63s")
 
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
@@ -47,7 +47,7 @@ if not API_ID or not API_HASH or not BOT_TOKEN:
     logger.critical("❌ خطأ: لم يتم العثور على API_ID أو API_HASH أو BOT_TOKEN في متغيرات البيئة!")
     exit(1)
 
-app = Client("UniversalDownloaderBot_v62_5", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("UniversalDownloaderBot_v63s", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 ACTIVE_TASKS = {}
 CANCELLED_TASKS = set()
@@ -61,18 +61,19 @@ USER_CONFIGS: Dict[int, Dict[str, bool]] = {}
 
 MAX_FILE_SIZE = 2000 * 1024 * 1024  # 2 GB limit for standard Telegram upload
 
+# تحديث مصفوفة متصفحات حقيقية وحديثة لعام 2026 لمقاطعة الحظر
 USER_AGENTS_POOL = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Safari/605.1.15'
 ]
 
 FB_USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
 ]
 
 def get_random_headers(for_fb: bool = False) -> dict:
@@ -82,6 +83,8 @@ def get_random_headers(for_fb: bool = False) -> dict:
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
         'Sec-Fetch-Mode': 'navigate',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
     }
     if for_fb:
         headers.update({
@@ -200,7 +203,7 @@ DM_COOKIE_PATH = setup_cookies("DAILYMOTION_COOKIES_BASE64", DM_COOKIES_PATH)
 FB_COOKIE_PATH = setup_cookies("FACEBOOK_COOKIES_BASE64", FB_COOKIES_PATH) or setup_cookies("FB_COOKIES_BASE64", FB_COOKIES_PATH)
 
 # ----------------------------------------------------
-# 🖼️ أدوات الثمبنيل والمدة وأبعاد الفيديو والترجمة والضغط v62.5
+# 🖼️ أدوات الثمبنيل والمدة وأبعاد الفيديو والترجمة والضغط v63s
 # ----------------------------------------------------
 def format_size(bytes_val: float) -> str:
     if not bytes_val: return "0 B"
@@ -305,7 +308,7 @@ async def convert_to_mp4(file_path: str) -> str:
     return file_path
 
 # ----------------------------------------------------
-# 🗜️ محرك ضغط الفيديو FFmpeg v62.5
+# 🗜️ محرك ضغط الفيديو FFmpeg v63s
 # ----------------------------------------------------
 def compress_video_ffmpeg(input_path: str, target_quality: str, output_path: str, task_id: Optional[str] = None, loop: Optional[asyncio.AbstractEventLoop] = None) -> bool:
     try:
@@ -360,7 +363,7 @@ def compress_video_ffmpeg(input_path: str, target_quality: str, output_path: str
             output_path
         ]
 
-        logger.info(f"⚙️ جاري تنفيذ أمر الضغط بـ FFmpeg v62.5: {' '.join(cmd)}")
+        logger.info(f"⚙️ جاري تنفيذ أمر الضغط بـ FFmpeg v63s: {' '.join(cmd)}")
         
         start_time = time.time()
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
@@ -449,14 +452,14 @@ def determine_url_type(url: str) -> str:
     return "direct"
 
 def is_direct_link(url: str) -> bool:
-    """التحقق التلقائي مما إذا كان الرابط رابطاً مباشراً أو بث HLS/M3U8"""
+    """التحقق التلقائي مما إذا كان الرابط رابطاً مباشراً"""
     url_lower = url.lower()
-    direct_extensions = ('.mp4', '.mkv', '.avi', '.mov', '.flv', '.webm', '.m4v', '.3gp', '.mp3', '.m4a', '.zip', '.rar', '.7z', '.pdf', '.m3u8')
-    if "b-cdn.net" in url_lower or "brqz.online" in url_lower or "mediafire.com" in url_lower or "mega.nz" in url_lower or "mega.co.nz" in url_lower:
+    direct_extensions = ('.mp4', '.mkv', '.avi', '.mov', '.flv', '.webm', '.m4v', '.3gp', '.mp3', '.m4a', '.zip', '.rar', '.7z', '.pdf')
+    if "brqz.online" in url_lower or "mediafire.com" in url_lower or "mega.nz" in url_lower or "mega.co.nz" in url_lower:
         return True
     parsed = urlparse(url)
     path = parsed.path.lower()
-    return any(path.endswith(ext) for ext in direct_extensions) or ".m3u8" in url_lower
+    return any(path.endswith(ext) for ext in direct_extensions)
 
 def clean_facebook_url(url: str) -> str:
     """تنظيف وتنسيق روابط فيسبوك لحل مشاكل Parsing"""
@@ -928,9 +931,9 @@ def download_mega_file(url: str, task_id: str) -> Dict[str, Any]:
     }
 
 # ----------------------------------------------------
-# 🧠 المحرك الشامل v62.5 Engine (مع دعم HLS/m3u8 و Bunny CDN)
+# 🧠 المحرك الشامل v63s Anti-Block Engine
 # ----------------------------------------------------
-class UniversalEngineV62:
+class UniversalEngineV63s:
     def __init__(self):
         self.user_agents = USER_AGENTS_POOL
 
@@ -938,7 +941,7 @@ class UniversalEngineV62:
         return is_dailymotion_url(url)
 
     def download_direct_url(self, url: str, task_id: str, loop: asyncio.AbstractEventLoop) -> Dict[str, Any]:
-        """دالة مخصصة لتحميل الفيديوهات المباشرة بما فيها cdn1-lkf.brqz.online و b-cdn.net مع دعم M3U8 و HLS"""
+        """دالة مخصصة لتحميل الفيديوهات المباشرة بما فيها cdn1-lkf.brqz.online برفع سرعة التحميل وتفادي الحظر مباشرة"""
         out_dir = "downloads"
         os.makedirs(out_dir, exist_ok=True)
         
@@ -947,14 +950,15 @@ class UniversalEngineV62:
         filename = os.path.basename(path)
         if filename and '?' in filename:
             filename = filename.split('?')[0]
-        if not filename or '.' not in filename or filename.endswith('.m3u8'):
+        if not filename or '.' not in filename:
             filename = f"video_{task_id}.mp4"
             
         file_path = os.path.join(out_dir, f"{task_id}_{filename}")
-        if not file_path.endswith('.mp4'):
-            file_path += ".mp4"
         
         start_time = time.time()
+
+        # إضافة التوقف الذكي والتأخير لتجنب اكتشاف الأتمتة والسلوك المباشر
+        time.sleep(random.uniform(1.0, 2.5))
 
         ydl_opts = {
             'outtmpl': file_path,
@@ -964,18 +968,17 @@ class UniversalEngineV62:
             'concurrent_fragment_downloads': 16,
             'retries': 30,
             'fragment_retries': 30,
-            'merge_output_format': 'mp4',
-            'hls_split_discontinuity': True,
-            'http_headers': {
-                'User-Agent': random.choice(self.user_agents),
-                'Accept': '*/*',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive'
-            },
+            'sleep_interval': 3,
+            'max_sleep_interval': 6,
+            'sleep_interval_requests': 2,
+            'http_headers': get_random_headers(),
             'external_downloader_args': {
                 'ffmpeg': ['-headers', f'User-Agent: {random.choice(self.user_agents)}']
             }
         }
+
+        if HTTP_PROXY:
+            ydl_opts['proxy'] = HTTP_PROXY
 
         def ytdl_hook(d):
             if task_id in CANCELLED_TASKS:
@@ -985,52 +988,56 @@ class UniversalEngineV62:
                 downloaded = d.get("downloaded_bytes", 0)
                 q = PROGRESS_QUEUES.get(task_id)
                 if q:
-                    loop.call_soon_threadsafe(q.put_nowait, ("تحميل مباشر عالي السرعة (HLS/Direct)", downloaded, total, start_time, "bytes"))
+                    loop.call_soon_threadsafe(q.put_nowait, ("تحميل مباشر عالي السرعة", downloaded, total, start_time, "bytes"))
 
         ydl_opts['progress_hooks'] = [ytdl_hook]
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                title_extracted = info.get('title') if info else filename
-                if title_extracted and not title_extracted.endswith('.mp4'):
-                    title_extracted += ".mp4"
+                ydl.download([url])
         except Exception as ex:
-            logger.warning(f"⚠️ Fast yt-dlp direct download failed, fallback to urllib/ffmpeg: {ex}")
-            title_extracted = filename
+            logger.warning(f"⚠️ Fast yt-dlp direct download failed, fallback to urllib: {ex}")
             
-            if ".m3u8" in url.lower():
-                cmd = [
-                    "ffmpeg", "-y",
-                    "-headers", f"User-Agent: {random.choice(self.user_agents)}\r\n",
-                    "-i", url,
-                    "-c", "copy",
-                    "-bsf:a", "aac_adtstoasc",
-                    "-movflags", "+faststart",
-                    file_path
-                ]
-                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-            else:
-                def progress_callback(blocknum, blocksize, totalsize):
+            def progress_callback(blocknum, blocksize, totalsize):
+                if task_id in CANCELLED_TASKS:
+                    raise ProcessCancelledException("CANCELLED")
+                downloaded = blocknum * blocksize
+                q = PROGRESS_QUEUES.get(task_id)
+                if q:
+                    loop.call_soon_threadsafe(q.put_nowait, ("تحميل الفيديو (رابط مباشر)", downloaded, totalsize, start_time, "bytes"))
+
+            headers = get_random_headers()
+            max_attempts = 4
+            for attempt in range(max_attempts):
+                try:
                     if task_id in CANCELLED_TASKS:
                         raise ProcessCancelledException("CANCELLED")
-                    downloaded = blocknum * blocksize
-                    q = PROGRESS_QUEUES.get(task_id)
-                    if q:
-                        loop.call_soon_threadsafe(q.put_nowait, ("تحميل الفيديو (رابط مباشر)", downloaded, totalsize, start_time, "bytes"))
+                    
+                    time.sleep(random.uniform(1.0, 3.0)) # تأخير لمنع الحظر
 
-                headers = get_random_headers()
-                opener = urllib.request.build_opener()
-                opener.addheaders = [(k, v) for k, v in headers.items()]
-                urllib.request.install_opener(opener)
-                urllib.request.urlretrieve(url, file_path, reporthook=progress_callback)
+                    opener = urllib.request.build_opener()
+                    opener.addheaders = [(k, v) for k, v in headers.items()]
+                    urllib.request.install_opener(opener)
+                    
+                    urllib.request.urlretrieve(url, file_path, reporthook=progress_callback)
+                    break
+                except urllib.error.HTTPError as e:
+                    if e.code == 429 and attempt < max_attempts - 1:
+                        sleep_time = (attempt + 1) * 3 + random.uniform(1.0, 3.0)
+                        logger.warning(f"⚠️ HTTP 429 detected during direct download. Retrying in {sleep_time:.1f}s...")
+                        time.sleep(sleep_time)
+                        headers = get_random_headers()
+                        continue
+                    raise e
+                except Exception as e_inner:
+                    raise e_inner
 
         duration = get_media_duration(file_path)
         thumb_path = generate_ffmpeg_thumbnail(file_path, task_id)
         
         return {
             "file_path": file_path,
-            "title": title_extracted,
+            "title": filename,
             "duration": duration,
             "thumb_path": thumb_path,
             "description": "",
@@ -1092,6 +1099,9 @@ class UniversalEngineV62:
             else:
                 format_selector = f'best[height<={target_option}][ext=mp4]/best[height<={target_option}]/best'
 
+        # إضافة فاصل زمني (sleep) لمنع السيرفر من اكتشاف الأتمتة
+        time.sleep(random.uniform(1.0, 2.5))
+
         ydl_opts = {
             'format': format_selector,
             'outtmpl': out_template,
@@ -1113,12 +1123,7 @@ class UniversalEngineV62:
             'sleep_interval_requests': 2,
             'skip_unavailable_fragments': True,
             'geo_bypass': True,
-            'http_headers': {
-                'User-Agent': user_agent,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Sec-Fetch-Mode': 'navigate',
-            },
+            'http_headers': get_random_headers(),
             'legacyserverconnect': True,
         }
 
@@ -1224,15 +1229,15 @@ class UniversalEngineV62:
                     ydl_opts['extractor_args'] = {}
                     continue
                 if "429" in str(err) and dl_attempt < max_dl_retries - 1:
-                    time.sleep(3 * (dl_attempt + 1) + random.uniform(0.5, 1.5))
-                    ydl_opts['user_agent'] = random.choice(FB_USER_AGENTS if "facebook" in url_lower else self.user_agents)
+                    time.sleep(4 * (dl_attempt + 1) + random.uniform(1.0, 3.0))
+                    ydl_opts['http_headers'] = get_random_headers("facebook" in url_lower)
                     continue
                 raise err
 
-engine = UniversalEngineV62()
+engine = UniversalEngineV63s()
 
 # ----------------------------------------------------
-# 🛠️ لوحات الأزرار الجودة والضغط v62.5
+# 🛠️ لوحات الأزرار الجودة والضغط v63s
 # ----------------------------------------------------
 def build_quality_keyboard(req_id: str) -> InlineKeyboardMarkup:
     buttons = [
@@ -1266,7 +1271,7 @@ def build_compress_keyboard(req_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(buttons)
 
 # ----------------------------------------------------
-# 🛠️ مدير الواجهة والتقدم v62.5
+# 🛠️ مدير الواجهة والتقدم v63s
 # ----------------------------------------------------
 def render_progress_bar(percentage: float) -> str:
     filled = int(percentage // 10)
@@ -1301,7 +1306,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                         bar = f"[{render_progress_bar(percentage)}] `{percentage:.1f}%`\n"
                         speed_factor = speed
                         text = (
-                            f"⚙️ **[v62.5 Engine - High Speed Protected]**\n"
+                            f"⚙️ **[v63s Engine - High Speed Protected]**\n"
                             f"📌 **العملية:** {action_title}\n\n"
                             f"{bar}"
                             f"⏱️ **المنقضي:** `{format_time(current)}` / `{format_time(total)}`\n"
@@ -1311,7 +1316,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                     else:
                         bar = "🔄 `جاري معالجة وضغط المقطع بـ FFmpeg...`\n"
                         text = (
-                            f"⚙️ **[v62.5 Engine - High Speed Protected]**\n"
+                            f"⚙️ **[v63s Engine - High Speed Protected]**\n"
                             f"📌 **العملية:** {action_title}\n\n"
                             f"{bar}"
                             f"📤 **ملاحظة:** سيتم رفع الفيديو فور اكتمال عملية الضغط."
@@ -1329,7 +1334,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                         eta_str = ""
 
                     text = (
-                        f"⚡ **[v62.5 Engine - Direct Stream Speed]**\n"
+                        f"⚡ **[v63s Engine - Direct Stream Speed]**\n"
                         f"📌 **العملية:** {action_title}\n\n"
                         f"{bar}"
                         f"📦 **الحجم:** `{current / (1024*1024):.1f}MB` / {total_str}\n"
@@ -1366,7 +1371,7 @@ def cleanup_files(task_id: str):
     PROGRESS_QUEUES.pop(task_id, None)
 
 # ----------------------------------------------------
-# 📥 استقبال المعالجات العامة وعرض أزرار الجودة فوراً (v62.5)
+# 📥 استقبال المعالجات العامة وعرض أزرار الجودة فوراً (v63s)
 # ----------------------------------------------------
 @app.on_message(filters.private & filters.text & ~filters.command(["start", "settings", "trim"]))
 async def handle_text_url(client: Client, message: Message):
@@ -1376,7 +1381,7 @@ async def handle_text_url(client: Client, message: Message):
 
     url = url_match.group(0).strip()
     
-    # تحضير زر اختيار الجودة مباشرةً لكل أنواع الروابط المباشرة ومنصات التواصل الاجتماعي و Bunny CDN/HLS
+    # تحضير زر اختيار الجودة مباشرةً لكل أنواع الروابط المباشرة ومنصات التواصل الاجتماعي
     req_id = f"req_{message.from_user.id}_{int(time.time())}"
     PENDING_URLS[req_id] = (url, message)
 
@@ -1391,7 +1396,7 @@ async def handle_text_url(client: Client, message: Message):
     )
 
 # ----------------------------------------------------
-# 🎯 معالج الضغط على أزرار اختيار الجودة (v62.5)
+# 🎯 معالج الضغط على أزرار اختيار الجودة (v63s)
 # ----------------------------------------------------
 @app.on_callback_query(filters.regex(r"^q_"))
 async def process_quality_selection_callback(client: Client, callback: CallbackQuery):
@@ -1464,7 +1469,7 @@ async def process_cancel_callback(client: Client, callback: CallbackQuery):
         logger.error(f"Cancel Callback Error: {e}")
 
 # ----------------------------------------------------
-# 🚀 تنفيذ التنزيل والرفع المباشر إلى تلجرام (v62.5 Engine)
+# 🚀 تنفيذ التنزيل والرفع المباشر إلى تلجرام
 # ----------------------------------------------------
 async def process_download_task(client: Client, task_id: str, url: str, quality: str, status_msg: Message, user_message: Optional[Message] = None):
     loop = asyncio.get_running_loop()
@@ -1510,12 +1515,7 @@ async def process_download_task(client: Client, task_id: str, url: str, quality:
             duration = await loop.run_in_executor(None, get_media_duration, part_file)
             part_suffix = f"\n📦 **الجزء ({idx+1}/{len(parts)})**" if len(parts) > 1 else ""
 
-            # تشكيل كابشن الفيديو بصورة واضحة مطابقة للتنسيق بالصورة
-            clean_title = os.path.basename(part_file) if not file_info['title'] else file_info['title']
-            if clean_title.startswith(f"{task_id}_"):
-                clean_title = clean_title.replace(f"{task_id}_", "")
-
-            caption = f"🎬 **{clean_title}**\n[{quality}]\n🛡️ **Engine: v62 Engine**"
+            caption = f"🎬 **{file_info['title']}** [{quality}]{part_suffix}\n🛡️ **Engine:** `v63s Anti-Block`"
             if raw_desc and idx == 0:
                 clean_raw = raw_desc.strip()
                 if len(clean_raw) > 400: clean_raw = clean_raw[:400] + "..."
@@ -1544,7 +1544,6 @@ async def process_download_task(client: Client, task_id: str, url: str, quality:
                 raw_thumb = await loop.run_in_executor(None, get_valid_thumbnail, part_file, task_id, file_info.get("thumb_path"), f"_v_{idx}")
                 part_thumb = sanitize_thumb(raw_thumb)
 
-                # إرسال الفيديو كفيديو تفاعلي مع دعم التدفّق وحجم المقطع
                 video_kwargs = {
                     "chat_id": status_msg.chat.id,
                     "video": part_file,
@@ -1602,7 +1601,7 @@ async def process_download_task(client: Client, task_id: str, url: str, quality:
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 🗜️ معالجة الفيديوهات المحولة والمباشرة للضغط (v62.5 Engine)
+# 🗜️ معالجة الفيديوهات المحولة والمباشرة للضغط (v63s Engine)
 # ----------------------------------------------------
 @app.on_message(filters.private & (filters.video | filters.document))
 async def handle_video_message(client: Client, message: Message):
@@ -1751,7 +1750,7 @@ async def process_compression_task(client: Client, task_id: str, target_msg: Mes
                 f"📊 **قبل الضغط:** `{format_size(orig_size)}`\n"
                 f"📉 **بعد الضغط:** `{format_size(compressed_size)}`\n"
                 f"✨ **نسبة التخفيض:** `{saved_percent:.1f}%`\n"
-                f"🛡️ **Engine:** `v62 Engine`"
+                f"🛡️ **Engine:** `v63s Anti-Block`"
             )
 
             video_kwargs = {
@@ -1794,17 +1793,17 @@ async def process_compression_task(client: Client, task_id: str, target_msg: Mes
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 📡 الأحداث والأوامر v62.5
+# 📡 الأحداث والأوامر v63s
 # ----------------------------------------------------
 @app.on_message(filters.command(["start", "."]) | filters.regex(r"^/$") & filters.private)
 async def start_cmd(client: Client, message: Message):
     await message.reply_text(
-        "🚀 **أهلاً بك في بوت v62.5 Universal Downloader Engine**\n\n"
-        "✨ **المميزات وتحديثات الإصدار v62.5 الجديد:**\n"
-        "• ⚡ **دعم كامل لروابط Bunny CDN (`b-cdn.net`) والبث المباشر `hls / m3u8` مع أجهزة الـ Tokens.**\n"
-        "• 🎬 **عرض الفيديو مع زر المشاهدة بالمنتصف وعرض وقت المقطع والدقة بالأعلى بشكل صحيح.**\n"
-        "• 🎯 **تخصيص الخيارات الفورية للتحميل بدقة 1080p, 720p, 480p, 320p أو MP3.**\n"
-        "• 🛡️ **الحفاظ التام على جميع المميزات السابقة** (إرسال نسخة للأدمن، الضغط بـ FFmpeg، إعدادات اللقطات، وأمر القص /trim).\n"
+        "🚀 **أهلاً بك في بوت v63s Universal Anti-Block Downloader Engine**\n\n"
+        "✨ **تحديثات الإصدار v63s الحماية لمقاطعة الحظر:**\n"
+        "• 🌐 **هيدرات مخصصة حقيقية:** دمج وتناوب تلقائي لـ User-Agents حديثة لعام 2026.\n"
+        "• ⏱️ **تأخير ذكي (Smart Delays):** إضافة وقفات عشوائية متغيرة لمنع الحظر التلقائي للسيرفرات.\n"
+        "• 🔒 **حماية الروابط المباشرة ومنصات التواصل:** معالجة متقدمة لأخطاء 429 وتفادي الانقطاعات.\n"
+        "• 🛡️ **الحفاظ التام على باقي المميزات:** (الرفع التلقائي للآدمن، الضغط بـ FFmpeg، أمر /trim، وإعدادات اللقطات).\n"
     )
 
 @app.on_message(filters.command(["settings", ".."]) | filters.regex(r"^//$") & filters.private)
@@ -1917,7 +1916,7 @@ async def process_url_trim_task(client: Client, task_id: str, url: str, start_st
         raw_thumb = await loop.run_in_executor(None, get_valid_thumbnail, trimmed_path, task_id, None, "_trim")
         thumb_path = sanitize_thumb(raw_thumb)
 
-        caption = f"✂️ **تم قص الفيديو بنجاح!**\n⏱️ **المقطع من:** `{start_str}` إلى `{end_str}`\n🛡️ **Engine:** `v62 Engine`"
+        caption = f"✂️ **تم قص الفيديو بنجاح!**\n⏱️ **المقطع من:** `{start_str}` إلى `{end_str}`\n🛡️ **Engine:** `v63s Anti-Block`"
 
         video_kwargs = {
             "chat_id": status_msg.chat.id,
@@ -1959,9 +1958,9 @@ async def process_url_trim_task(client: Client, task_id: str, url: str, start_st
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 🏁 تشغيل البوت v62.5
+# 🏁 تشغيل البوت v63s
 # ----------------------------------------------------
 if __name__ == "__main__":
-    logger.info("🚀 جاري تشغيل بوت v62.5 Universal Downloader Engine...")
+    logger.info("🚀 جاري تشغيل بوت v63s Universal Anti-Block Downloader Engine...")
     auto_disk_guard()
     app.run()
