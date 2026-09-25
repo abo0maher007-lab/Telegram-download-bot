@@ -1,14 +1,10 @@
 FROM python:3.11-slim
 
-# تثبيت FFmpeg والتحديثات الأساسية للتحميل (تم حذف حزمة chmod الوهمية)
+# تثبيت FFmpeg والتحديثات الأساسية
 RUN apt-get update && \
-    apt-get install -y ffmpeg wget curl && \
+    apt-get install -y ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-# تحميل أداة wireproxy المخصصة لـ Linux 64-bit المتوافقة مع Railway
-RUN wget https://github.com -O /usr/local/bin/wireproxy && \
-    chmod +x /usr/local/bin/wireproxy
 
 WORKDIR /app
 
@@ -18,5 +14,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# تشغيل البوت مباشرة (الذي سيقوم بتشغيل البروكسي برمجياً)
+# تشغيل البوت
 CMD ["python", "bot.py"]
