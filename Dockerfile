@@ -1,8 +1,8 @@
 FROM python:3.11-slim
 
-# تثبيت FFmpeg والتحديثات الأساسية للتحميل والأدوات
+# تثبيت FFmpeg والتحديثات الأساسية للتحميل (تم حذف حزمة chmod الوهمية)
 RUN apt-get update && \
-    apt-get install -y ffmpeg wget curl chmod && \
+    apt-get install -y ffmpeg wget curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -18,5 +18,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# تشغيل البوت مباشرة
+# تشغيل البوت مباشرة (الذي سيقوم بتشغيل البروكسي برمجياً)
 CMD ["python", "bot.py"]
