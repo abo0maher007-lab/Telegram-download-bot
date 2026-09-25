@@ -1,53 +1,4 @@
 import os
-import subprocess
-import time
-
-def start_warp_proxy():
-    print("[+] جاري إعداد وتجهيز نفق WARP 1.1.1.1 برمجياً...")
-    
-    # قراءة المفاتيح التي وضعتها في متغيرات Railway
-    warp_private_key = os.getenv("WARP_PRIVATE_KEY")
-    warp_public_key = os.getenv("WARP_PUBLIC_KEY")
-    
-    if not warp_private_key or not warp_public_key:
-        print("[-] خطأ: لم يتم العثور على مفاتيح WARP في متغيرات المنصة (Variables)!")
-        return False
-        
-    # كتابة ملف الإعدادات بدقة
-    config_content = f"""[Interface]
-PrivateKey = {warp_private_key}
-Address = 172.16.0.2/32, 2606:4700:110:8413:1f72:a87e:b2ee:a1f6/128
-
-[Peer]
-PublicKey = {warp_public_key}
-Endpoint = ://cloudflareclient.com
-
-[Socks5]
-BindAddress = 127.0.0.1:40001
-"""
-    
-    with open("wireproxy.conf", "w") as f:
-        f.write(config_content)
-        
-    try:
-        # تشغيل أداة wireproxy كعملية فرعية (Subprocess) في الخلفية داخل السيرفر
-        subprocess.Popen(["wireproxy", "-c", "wireproxy.conf"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print("[+] تم تشغيل أداة wireproxy بنجاح في خلفية السيرفر.")
-        
-        # الانتظار 4 ثوانٍ كاملة لضمان استقرار الاتصال وفتح المنفذ
-        time.sleep(4)
-        return True
-    except Exception as e:
-        print(f"[-] فشل تشغيل wireproxy برمجياً: {e}")
-        return False
-
-# استدعاء الدالة فوراً عند إقلاع الملف
-start_warp_proxy()
-
-# =========================================================
-# ضع هنا باقي كود البوت الخاص بك وإعدادات الـ ydl_opts الحالية
-# =========================================================
-import os
 import re
 import time
 import base64
@@ -67,53 +18,6 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, 
 from pyrogram.errors import FloodWait, RPCError, MessageNotModified
 import yt_dlp
 
-# ----------------------------------------------------
-# 🌐 دالة توليد إعدادات WARP تلقائياً عند الإقلاع
-# ----------------------------------------------------
-def generate_warp_config():
-    config_file = "wireproxy.conf"
-    
-    # إذا كان الملف موجوداً مسبقاً فلا داعي لتوليده مرة أخرى
-    if os.path.exists(config_file):
-        print("[-] ملف إعدادات WARP موجود بالفعل.")
-        return
-
-    print("[+] جاري إنشاء حساب WARP وتوليد الإعدادات من السيرفر...")
-    try:
-        # الاتصال بخادم التسجيل الرسمي لـ Cloudflare
-        url = "https://cloudflareclient.com"
-        headers = {"User-Agent": "okhttp/3.12.1", "Content-Type": "application/json"}
-        
-        response = requests.post(url, headers=headers, timeout=10)
-        data = response.json()
-        
-        # استخراج المفاتيح السرية
-        private_key = data["config"]["interface"]["account"]["private_key"]
-        public_key = data["config"]["peers"][0]["public_key"]
-        
-        # كتابة ملف إعدادات wireproxy تلقائياً
-        config_content = f"""[Interface]
-PrivateKey = {private_key}
-Address = 172.16.0.2/32, fd00::5/128
-
-[Peer]
-PublicKey = {public_key}
-Endpoint = ://cloudflareclient.com
-
-[Socks5]
-BindAddress = 127.0.0.1:40001
-"""
-        with open(config_file, "w") as f:
-            f.write(config_content)
-            
-        print("[+] تم توليد ملف wireproxy.conf بنجاح وبأعلى جودة!")
-        
-    except Exception as e:
-        print(f"[-] فشل توليد الملف تلقائياً بسبب: {e}")
-
-# تشغيل الدالة عند إقلاع البوت
-generate_warp_config()
-
 # استيراد مترجم النصوص للترجمة إلى العربية
 try:
     from deep_translator import GoogleTranslator
@@ -122,10 +26,10 @@ except ImportError:
     HAS_TRANSLATOR = False
 
 # ----------------------------------------------------
-# 🚂 إعداد التسجيل والمحيط - v62 Engine (Universal Quality Buttons)
+# 🚂 إعداد التسجيل والمحيط - v64s Anti-Block & ShahidTV Proxy Engine
 # ----------------------------------------------------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - [%(levelname)s] - %(message)s")
-logger = logging.getLogger("UniversalBot_v62")
+logger = logging.getLogger("UniversalBot_v64s")
 
 API_ID = os.environ.get("API_ID")
 API_HASH = os.environ.get("API_HASH")
@@ -143,7 +47,7 @@ if not API_ID or not API_HASH or not BOT_TOKEN:
     logger.critical("❌ خطأ: لم يتم العثور على API_ID أو API_HASH أو BOT_TOKEN في متغيرات البيئة!")
     exit(1)
 
-app = Client("UniversalDownloaderBot_v62", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("UniversalDownloaderBot_v64s", api_id=int(API_ID), api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 ACTIVE_TASKS = {}
 CANCELLED_TASKS = set()
@@ -158,17 +62,17 @@ USER_CONFIGS: Dict[int, Dict[str, bool]] = {}
 MAX_FILE_SIZE = 2000 * 1024 * 1024  # 2 GB limit for standard Telegram upload
 
 USER_AGENTS_POOL = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.3 Safari/605.1.15'
 ]
 
 FB_USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
 ]
 
 def get_random_headers(for_fb: bool = False) -> dict:
@@ -178,6 +82,8 @@ def get_random_headers(for_fb: bool = False) -> dict:
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
         'Sec-Fetch-Mode': 'navigate',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
     }
     if for_fb:
         headers.update({
@@ -296,7 +202,7 @@ DM_COOKIE_PATH = setup_cookies("DAILYMOTION_COOKIES_BASE64", DM_COOKIES_PATH)
 FB_COOKIE_PATH = setup_cookies("FACEBOOK_COOKIES_BASE64", FB_COOKIES_PATH) or setup_cookies("FB_COOKIES_BASE64", FB_COOKIES_PATH)
 
 # ----------------------------------------------------
-# 🖼️ أدوات الثمبنيل والمدة وأبعاد الفيديو والترجمة والضغط v62
+# 🖼️ أدوات الثمبنيل والمدة وأبعاد الفيديو والترجمة والضغط
 # ----------------------------------------------------
 def format_size(bytes_val: float) -> str:
     if not bytes_val: return "0 B"
@@ -401,7 +307,7 @@ async def convert_to_mp4(file_path: str) -> str:
     return file_path
 
 # ----------------------------------------------------
-# 🗜️ محرك ضغط الفيديو FFmpeg v62
+# 🗜️ محرك ضغط الفيديو FFmpeg
 # ----------------------------------------------------
 def compress_video_ffmpeg(input_path: str, target_quality: str, output_path: str, task_id: Optional[str] = None, loop: Optional[asyncio.AbstractEventLoop] = None) -> bool:
     try:
@@ -456,7 +362,7 @@ def compress_video_ffmpeg(input_path: str, target_quality: str, output_path: str
             output_path
         ]
 
-        logger.info(f"⚙️ جاري تنفيذ أمر الضغط بـ FFmpeg v62: {' '.join(cmd)}")
+        logger.info(f"⚙️ جاري تنفيذ أمر الضغط بـ FFmpeg: {' '.join(cmd)}")
         
         start_time = time.time()
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, universal_newlines=True)
@@ -548,7 +454,7 @@ def is_direct_link(url: str) -> bool:
     """التحقق التلقائي مما إذا كان الرابط رابطاً مباشراً"""
     url_lower = url.lower()
     direct_extensions = ('.mp4', '.mkv', '.avi', '.mov', '.flv', '.webm', '.m4v', '.3gp', '.mp3', '.m4a', '.zip', '.rar', '.7z', '.pdf')
-    if "brqz.online" in url_lower or "mediafire.com" in url_lower or "mega.nz" in url_lower or "mega.co.nz" in url_lower:
+    if "shahidtv.net" in url_lower or "brqz.online" in url_lower or "mediafire.com" in url_lower or "mega.nz" in url_lower or "mega.co.nz" in url_lower:
         return True
     parsed = urlparse(url)
     path = parsed.path.lower()
@@ -753,29 +659,19 @@ async def download_dailymotion_video(event, url, quality_choice, status_msg, use
         'max_sleep_interval': 6,
         'sleep_interval_requests': 2,
         'skip_unavailable_fragments': True,
-        # الدمج الجديد لتجاوز حظر 403 عبر محاكاة كروم والبروكسي المحلي
-        'proxy': 'socks5://127.0.0.1:40001',
         'extractor_args': {
-            'generic': {
-                'impersonate': ['chrome']
-            },
             'dailymotion': {
                 'app_id': 'dmfed',
                 'geo_verification_network': 'http'
             }
-        },
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
         }
     }
 
     if DM_COOKIE_PATH and os.path.exists(DM_COOKIE_PATH):
         ydl_opts['cookiefile'] = DM_COOKIE_PATH
+
+    if HTTP_PROXY:
+        ydl_opts['proxy'] = HTTP_PROXY
 
     try:
         if cancel_event.is_set():
@@ -789,7 +685,7 @@ async def download_dailymotion_video(event, url, quality_choice, status_msg, use
                 try:
                     info = ydl.extract_info(url, download=True)
                 except Exception:
-                    ydl_opts['extractor_args'] = {'generic': {'impersonate': ['chrome']}}
+                    ydl_opts['extractor_args'] = {}
                     ydl_opts['format'] = 'best' if not is_audio_mode else 'bestaudio/best'
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl_fallback:
                         info = ydl_fallback.extract_info(url, download=True)
@@ -1034,9 +930,9 @@ def download_mega_file(url: str, task_id: str) -> Dict[str, Any]:
     }
 
 # ----------------------------------------------------
-# 🧠 المحرك الشامل v62 Engine
+# 🧠 المحرك الشامل v64s Anti-Block & ShahidTV Engine
 # ----------------------------------------------------
-class UniversalEngineV62:
+class UniversalEngineV64s:
     def __init__(self):
         self.user_agents = USER_AGENTS_POOL
 
@@ -1044,7 +940,7 @@ class UniversalEngineV62:
         return is_dailymotion_url(url)
 
     def download_direct_url(self, url: str, task_id: str, loop: asyncio.AbstractEventLoop) -> Dict[str, Any]:
-        """دالة مخصصة لتحميل الفيديوهات المباشرة بما فيها cdn1-lkf.brqz.online برفع سرعة التحميل وتفادي الحظر مباشرة"""
+        """دالة مخصصة لتحميل الفيديوهات المباشرة بما فيها cdn1-lkf.brqz.online و b2.shahidtv.net برفع سرعة التحميل وتفادي الحظر مباشرة"""
         out_dir = "downloads"
         os.makedirs(out_dir, exist_ok=True)
         
@@ -1060,6 +956,13 @@ class UniversalEngineV62:
         
         start_time = time.time()
 
+        # إضافة التوقف الذكي والتأخير لتجنب اكتشاف الأتمتة والسلوك المباشر
+        time.sleep(random.uniform(1.0, 2.5))
+
+        extractor_args = {}
+        if "shahidtv.net" in url.lower():
+            extractor_args = {"generic": ["impersonate"]}
+
         ydl_opts = {
             'outtmpl': file_path,
             'quiet': True,
@@ -1068,24 +971,18 @@ class UniversalEngineV62:
             'concurrent_fragment_downloads': 16,
             'retries': 30,
             'fragment_retries': 30,
-            'proxy': 'socks5://127.0.0.1:40001',
-            'extractor_args': {
-                'generic': {
-                    'impersonate': ['chrome']
-                }
-            },
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Ch-Ua-Platform': '"Windows"',
-            },
+            'sleep_interval': 3,
+            'max_sleep_interval': 6,
+            'sleep_interval_requests': 2,
+            'http_headers': get_random_headers(),
+            'extractor_args': extractor_args,
             'external_downloader_args': {
                 'ffmpeg': ['-headers', f'User-Agent: {random.choice(self.user_agents)}']
             }
         }
+
+        if HTTP_PROXY:
+            ydl_opts['proxy'] = HTTP_PROXY
 
         def ytdl_hook(d):
             if task_id in CANCELLED_TASKS:
@@ -1120,16 +1017,23 @@ class UniversalEngineV62:
                     if task_id in CANCELLED_TASKS:
                         raise ProcessCancelledException("CANCELLED")
                     
-                    opener = urllib.request.build_opener()
+                    time.sleep(random.uniform(1.0, 3.0))
+
+                    if HTTP_PROXY:
+                        proxy_handler = urllib.request.ProxyHandler({'http': HTTP_PROXY, 'https': HTTP_PROXY})
+                        opener = urllib.request.build_opener(proxy_handler)
+                    else:
+                        opener = urllib.request.build_opener()
+
                     opener.addheaders = [(k, v) for k, v in headers.items()]
                     urllib.request.install_opener(opener)
                     
                     urllib.request.urlretrieve(url, file_path, reporthook=progress_callback)
                     break
                 except urllib.error.HTTPError as e:
-                    if e.code == 429 and attempt < max_attempts - 1:
-                        sleep_time = (attempt + 1) * 3 + random.uniform(0.5, 1.5)
-                        logger.warning(f"⚠️ HTTP 429 detected during direct download. Retrying in {sleep_time:.1f}s...")
+                    if e.code in (429, 403) and attempt < max_attempts - 1:
+                        sleep_time = (attempt + 1) * 3 + random.uniform(1.0, 3.0)
+                        logger.warning(f"⚠️ HTTP {e.code} detected during direct download. Retrying in {sleep_time:.1f}s...")
                         time.sleep(sleep_time)
                         headers = get_random_headers()
                         continue
@@ -1204,6 +1108,12 @@ class UniversalEngineV62:
             else:
                 format_selector = f'best[height<={target_option}][ext=mp4]/best[height<={target_option}]/best'
 
+        time.sleep(random.uniform(1.0, 2.5))
+
+        extractor_args = {}
+        if "shahidtv.net" in url_lower:
+            extractor_args = {"generic": ["impersonate"]}
+
         ydl_opts = {
             'format': format_selector,
             'outtmpl': out_template,
@@ -1225,22 +1135,9 @@ class UniversalEngineV62:
             'sleep_interval_requests': 2,
             'skip_unavailable_fragments': True,
             'geo_bypass': True,
-            # الدمج المطلوب لتفعيل بروكسي WARP ومحاكاة متصفح جوجل كروم لتجاوز حظر 403
-            'proxy': 'socks5://127.0.0.1:40001',
-            'extractor_args': {
-                'generic': {
-                    'impersonate': ['chrome']
-                }
-            },
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-                'Sec-Ch-Ua-Mobile': '?0',
-                'Sec-Ch-Ua-Platform': '"Windows"',
-            },
+            'http_headers': get_random_headers(),
             'legacyserverconnect': True,
+            'extractor_args': extractor_args,
         }
 
         if self.is_dailymotion_link(url):
@@ -1249,9 +1146,11 @@ class UniversalEngineV62:
                 'Referer': 'https://www.dailymotion.com/',
                 'Origin': 'https://www.dailymotion.com'
             })
-            ydl_opts['extractor_args']['dailymotion'] = {
-                'app_id': 'dmfed',
-                'geo_verification_network': 'http'
+            ydl_opts['extractor_args'] = {
+                'dailymotion': {
+                    'app_id': 'dmfed',
+                    'geo_verification_network': 'http'
+                }
             }
             if DM_COOKIE_PATH and os.path.exists(DM_COOKIE_PATH):
                 ydl_opts['cookiefile'] = DM_COOKIE_PATH
@@ -1272,16 +1171,18 @@ class UniversalEngineV62:
                 'merge_output_format': 'mp4' if not is_audio else None,
                 'check_formats': False,
                 'user_agent': fb_ua,
+                'http_headers': get_random_headers(for_fb=True),
                 'extractor_args': {
-                    'generic': {'impersonate': ['chrome']},
-                    'facebook': {'skip': ['dash', 'hls']}
+                    'facebook': {
+                        'skip': ['dash', 'hls']
+                    }
                 }
             })
             if FB_COOKIE_PATH and os.path.exists(FB_COOKIE_PATH):
                 ydl_opts['cookiefile'] = FB_COOKIE_PATH
 
         if "tiktok.com" in url_lower:
-            ydl_opts['extractor_args']['tiktok'] = {'app_version': '1.0.0'}
+            ydl_opts['extractor_args'] = {'tiktok': {'app_version': '1.0.0'}}
         
         if "instagram.com" in url_lower and IG_COOKIE_PATH and os.path.exists(IG_COOKIE_PATH):
             ydl_opts['cookiefile'] = IG_COOKIE_PATH
@@ -1289,6 +1190,9 @@ class UniversalEngineV62:
             ydl_opts['cookiefile'] = TW_COOKIE_PATH
         elif "pornhub.com" in url_lower and PH_COOKIE_PATH and os.path.exists(PH_COOKIE_PATH):
             ydl_opts['cookiefile'] = PH_COOKIE_PATH
+
+        if HTTP_PROXY:
+            ydl_opts['proxy'] = HTTP_PROXY
 
         max_dl_retries = 3
         for dl_attempt in range(max_dl_retries):
@@ -1335,16 +1239,18 @@ class UniversalEngineV62:
             except Exception as err:
                 if ("facebook.com" in url_lower or "fb.watch" in url_lower) and dl_attempt == 0:
                     ydl_opts['format'] = 'best' if not is_audio else 'bestaudio/best'
+                    ydl_opts['extractor_args'] = {}
                     continue
-                if "429" in str(err) and dl_attempt < max_dl_retries - 1:
-                    time.sleep(3 * (dl_attempt + 1) + random.uniform(0.5, 1.5))
+                if any(code in str(err) for code in ["429", "403"]) and dl_attempt < max_dl_retries - 1:
+                    time.sleep(4 * (dl_attempt + 1) + random.uniform(1.0, 3.0))
+                    ydl_opts['http_headers'] = get_random_headers("facebook" in url_lower)
                     continue
                 raise err
 
-engine = UniversalEngineV62()
+engine = UniversalEngineV64s()
 
 # ----------------------------------------------------
-# 🛠️ لوحات الأزرار الجودة والضغط v62
+# 🛠️ لوحات الأزرار الجودة والضغط
 # ----------------------------------------------------
 def build_quality_keyboard(req_id: str) -> InlineKeyboardMarkup:
     buttons = [
@@ -1378,7 +1284,7 @@ def build_compress_keyboard(req_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(buttons)
 
 # ----------------------------------------------------
-# 🛠️ مدير الواجهة والتقدم v62
+# 🛠️ مدير الواجهة والتقدم
 # ----------------------------------------------------
 def render_progress_bar(percentage: float) -> str:
     filled = int(percentage // 10)
@@ -1413,7 +1319,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                         bar = f"[{render_progress_bar(percentage)}] `{percentage:.1f}%`\n"
                         speed_factor = speed
                         text = (
-                            f"⚙️ **[v62 Engine - High Speed Protected]**\n"
+                            f"⚙️ **[v64s Engine - High Speed Protected]**\n"
                             f"📌 **العملية:** {action_title}\n\n"
                             f"{bar}"
                             f"⏱️ **المنقضي:** `{format_time(current)}` / `{format_time(total)}`\n"
@@ -1423,7 +1329,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                     else:
                         bar = "🔄 `جاري معالجة وضغط المقطع بـ FFmpeg...`\n"
                         text = (
-                            f"⚙️ **[v62 Engine - High Speed Protected]**\n"
+                            f"⚙️ **[v64s Engine - High Speed Protected]**\n"
                             f"📌 **العملية:** {action_title}\n\n"
                             f"{bar}"
                             f"📤 **ملاحظة:** سيتم رفع الفيديو فور اكتمال عملية الضغط."
@@ -1441,7 +1347,7 @@ async def progress_ui_worker(task_id: str, message: Message):
                         eta_str = ""
 
                     text = (
-                        f"⚡ **[v62 Engine - Direct Stream Speed]**\n"
+                        f"⚡ **[v64s Engine - Direct Stream Speed]**\n"
                         f"📌 **العملية:** {action_title}\n\n"
                         f"{bar}"
                         f"📦 **الحجم:** `{current / (1024*1024):.1f}MB` / {total_str}\n"
@@ -1478,7 +1384,7 @@ def cleanup_files(task_id: str):
     PROGRESS_QUEUES.pop(task_id, None)
 
 # ----------------------------------------------------
-# 📥 استقبال المعالجات العامة وعرض أزرار الجودة فوراً (v62)
+# 📥 استقبال المعالجات العامة وعرض أزرار الجودة فوراً
 # ----------------------------------------------------
 @app.on_message(filters.private & filters.text & ~filters.command(["start", "settings", "trim"]))
 async def handle_text_url(client: Client, message: Message):
@@ -1502,7 +1408,7 @@ async def handle_text_url(client: Client, message: Message):
     )
 
 # ----------------------------------------------------
-# 🎯 معالج الضغط على أزرار اختيار الجودة (v62)
+# 🎯 معالج الضغط على أزرار اختيار الجودة
 # ----------------------------------------------------
 @app.on_callback_query(filters.regex(r"^q_"))
 async def process_quality_selection_callback(client: Client, callback: CallbackQuery):
@@ -1621,7 +1527,7 @@ async def process_download_task(client: Client, task_id: str, url: str, quality:
             duration = await loop.run_in_executor(None, get_media_duration, part_file)
             part_suffix = f"\n📦 **الجزء ({idx+1}/{len(parts)})**" if len(parts) > 1 else ""
 
-            caption = f"🎬 **{file_info['title']}** [{quality}]{part_suffix}\n🛡️ **Engine:** `v62 Engine`"
+            caption = f"🎬 **{file_info['title']}** [{quality}]{part_suffix}\n🛡️ **Engine:** `v64s Anti-Block & ShahidTV`"
             if raw_desc and idx == 0:
                 clean_raw = raw_desc.strip()
                 if len(clean_raw) > 400: clean_raw = clean_raw[:400] + "..."
@@ -1705,7 +1611,7 @@ async def process_download_task(client: Client, task_id: str, url: str, quality:
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 🗜️ معالجة الفيديوهات المحولة والمباشرة للضغط (v62 Engine)
+# 🗜️ معالجة الفيديوهات المحولة والمباشرة للضغط
 # ----------------------------------------------------
 @app.on_message(filters.private & (filters.video | filters.document))
 async def handle_video_message(client: Client, message: Message):
@@ -1854,7 +1760,7 @@ async def process_compression_task(client: Client, task_id: str, target_msg: Mes
                 f"📊 **قبل الضغط:** `{format_size(orig_size)}`\n"
                 f"📉 **بعد الضغط:** `{format_size(compressed_size)}`\n"
                 f"✨ **نسبة التخفيض:** `{saved_percent:.1f}%`\n"
-                f"🛡️ **Engine:** `v62 Engine`"
+                f"🛡️ **Engine:** `v64s Anti-Block`"
             )
 
             video_kwargs = {
@@ -1897,17 +1803,17 @@ async def process_compression_task(client: Client, task_id: str, target_msg: Mes
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 📡 الأحداث والأوامر v62
+# 📡 الأحداث والأوامر
 # ----------------------------------------------------
 @app.on_message(filters.command(["start", "."]) | filters.regex(r"^/$") & filters.private)
 async def start_cmd(client: Client, message: Message):
     await message.reply_text(
-        "🚀 **أهلاً بك في بوت v62 Universal Downloader Engine**\n\n"
-        "✨ **تحديثات الإصدار v62 الجديدة:**\n"
-        "• 🎯 **عرض لوحة الجودات المباشرة:** إظهار لوحة اختيار الجودة فوراً لكل الروابط المباشرة ومنصات التواصل.\n"
-        "• ⚡ **إلغاء رسائل التحليل التلقائية:** تبسيط الاستجابة وإتاحة الاختيار الفوري للعمليات.\n"
-        "• 🗑️ **حذف TikTok SS Mode:** تحسين واستقرار المسار الرئيسي للتحميل بأعلى سرعة.\n"
-        "• 🛡️ **الحفاظ التام على باقي المميزات:** (الرفع التلقائي للآدمن، الضغط بـ FFmpeg، أمر /trim، وإعدادات اللقطات).\n"
+        "🚀 **أهلاً بك في بوت v64s Universal Anti-Block & ShahidTV Downloader Engine**\n\n"
+        "✨ **تحديثات الإصدار v64s الجديد:**\n"
+        "• 🌐 **دعم نطاق ShahidTV:** تم إضافة دعم كامل وتمرير وكيل البروكسي `HTTP_PROXY` وتخطي حماية Cloudflare Anti-Bot تلقائياً لروابط `https://b2.shahidtv.net`.\n"
+        "• ⚙️ **خاصية Impersonate:** استخدام خيار `--extractor-args generic:impersonate` لتفادي كتل الحظر للروابط المباشرة.\n"
+        "• ⏱️ **تأخير وقائيات الحظر:** الوقوف العشوائي لمنع اكتشاف الأتمتة والسلوك التلقائي السريع.\n"
+        "• 🛡️ **الحفاظ التام على باقي المميزات:** (الرفع التلقائي للأدمن، الضغط بـ FFmpeg، أمر /trim، وإعدادات اللقطات).\n"
     )
 
 @app.on_message(filters.command(["settings", ".."]) | filters.regex(r"^//$") & filters.private)
@@ -2020,7 +1926,7 @@ async def process_url_trim_task(client: Client, task_id: str, url: str, start_st
         raw_thumb = await loop.run_in_executor(None, get_valid_thumbnail, trimmed_path, task_id, None, "_trim")
         thumb_path = sanitize_thumb(raw_thumb)
 
-        caption = f"✂️ **تم قص الفيديو بنجاح!**\n⏱️ **المقطع من:** `{start_str}` إلى `{end_str}`\n🛡️ **Engine:** `v62 Engine`"
+        caption = f"✂️ **تم قص الفيديو بنجاح!**\n⏱️ **المقطع من:** `{start_str}` إلى `{end_str}`\n🛡️ **Engine:** `v64s Anti-Block`"
 
         video_kwargs = {
             "chat_id": status_msg.chat.id,
@@ -2062,9 +1968,9 @@ async def process_url_trim_task(client: Client, task_id: str, url: str, start_st
         ACTIVE_TASKS.pop(task_id, None)
 
 # ----------------------------------------------------
-# 🏁 تشغيل البوت v62
+# 🏁 تشغيل البوت v64s
 # ----------------------------------------------------
 if __name__ == "__main__":
-    logger.info("🚀 جاري تشغيل بوت v62 Universal Downloader Engine...")
+    logger.info("🚀 جاري تشغيل بوت v64s Universal Anti-Block & ShahidTV Downloader Engine...")
     auto_disk_guard()
     app.run()
