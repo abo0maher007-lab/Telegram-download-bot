@@ -2,9 +2,9 @@ FROM python:3.11-slim
 
 # تثبيت FFmpeg، التحديثات الأساسية، وأدوات التحميل
 RUN apt-get update && \
-    apt-get install -y ffmpeg wget curl chmod && \
+    apt-get install -y ffmpeg wget curl && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/**
 
 # تحميل أداة wireproxy المخصصة لـ Linux 64-bit المتوافقة مع سيرفرات Railway
 RUN wget https://github.com -O /usr/local/bin/wireproxy && \
