@@ -4,7 +4,6 @@ pyrogram
 tgcrypto
 requests
 tenacity
-yt-dlp
 beautifulsoup4
 curl_cffi
 websockets
@@ -13,3 +12,4 @@ aiosqlite
 Pillow
 gallery-dl
 psutil
+yt-dlp[default]
