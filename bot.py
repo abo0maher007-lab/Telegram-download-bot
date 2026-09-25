@@ -24,21 +24,25 @@ import yt_dlp
 def generate_warp_config():
     config_file = "wireproxy.conf"
     
+    # إذا كان الملف موجوداً مسبقاً فلا داعي لتوليده مرة أخرى
     if os.path.exists(config_file):
         print("[-] ملف إعدادات WARP موجود بالفعل.")
         return
 
     print("[+] جاري إنشاء حساب WARP وتوليد الإعدادات من السيرفر...")
     try:
+        # الاتصال بخادم التسجيل الرسمي لـ Cloudflare
         url = "https://cloudflareclient.com"
         headers = {"User-Agent": "okhttp/3.12.1", "Content-Type": "application/json"}
         
         response = requests.post(url, headers=headers, timeout=10)
         data = response.json()
         
+        # استخراج المفاتيح السرية
         private_key = data["config"]["interface"]["account"]["private_key"]
         public_key = data["config"]["peers"][0]["public_key"]
         
+        # كتابة ملف إعدادات wireproxy تلقائياً
         config_content = f"""[Interface]
 PrivateKey = {private_key}
 Address = 172.16.0.2/32, fd00::5/128
@@ -58,8 +62,10 @@ BindAddress = 127.0.0.1:40001
     except Exception as e:
         print(f"[-] فشل توليد الملف تلقائياً بسبب: {e}")
 
+# تشغيل الدالة عند إقلاع البوت
 generate_warp_config()
 
+# استيراد مترجم النصوص للترجمة إلى العربية
 try:
     from deep_translator import GoogleTranslator
     HAS_TRANSLATOR = True
@@ -490,6 +496,7 @@ def determine_url_type(url: str) -> str:
     return "direct"
 
 def is_direct_link(url: str) -> bool:
+    """التحقق التلقائي مما إذا كان الرابط رابطاً مباشراً"""
     url_lower = url.lower()
     direct_extensions = ('.mp4', '.mkv', '.avi', '.mov', '.flv', '.webm', '.m4v', '.3gp', '.mp3', '.m4a', '.zip', '.rar', '.7z', '.pdf')
     if "brqz.online" in url_lower or "mediafire.com" in url_lower or "mega.nz" in url_lower or "mega.co.nz" in url_lower:
@@ -499,6 +506,7 @@ def is_direct_link(url: str) -> bool:
     return any(path.endswith(ext) for ext in direct_extensions)
 
 def clean_facebook_url(url: str) -> str:
+    """تنظيف وتنسيق روابط فيسبوك لحل مشاكل Parsing"""
     clean_url = url.strip()
     clean_url = re.sub(r'([?&])fbclid=[^&]+', '', clean_url)
     clean_url = clean_url.replace("m.facebook.com", "www.facebook.com")
@@ -696,6 +704,7 @@ async def download_dailymotion_video(event, url, quality_choice, status_msg, use
         'max_sleep_interval': 6,
         'sleep_interval_requests': 2,
         'skip_unavailable_fragments': True,
+        # الدمج الجديد لتجاوز حظر 403 عبر محاكاة كروم والبروكسي المحلي
         'proxy': 'socks5://127.0.0.1:40001',
         'extractor_args': {
             'generic': {
@@ -705,6 +714,14 @@ async def download_dailymotion_video(event, url, quality_choice, status_msg, use
                 'app_id': 'dmfed',
                 'geo_verification_network': 'http'
             }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
         }
     }
 
@@ -723,11 +740,7 @@ async def download_dailymotion_video(event, url, quality_choice, status_msg, use
                 try:
                     info = ydl.extract_info(url, download=True)
                 except Exception:
-                    ydl_opts['extractor_args'] = {
-                        'generic': {
-                            'impersonate': ['chrome']
-                        }
-                    }
+                    ydl_opts['extractor_args'] = {'generic': {'impersonate': ['chrome']}}
                     ydl_opts['format'] = 'best' if not is_audio_mode else 'bestaudio/best'
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl_fallback:
                         info = ydl_fallback.extract_info(url, download=True)
@@ -830,6 +843,9 @@ async def download_dailymotion_video(event, url, quality_choice, status_msg, use
                 try:
                     if ADMIN_CHAT_ID and chat_id != ADMIN_CHAT_ID:
                         from_user = user_message.from_user if user_message and user_message.from_user else getattr(event, 'from_user', None)
+                        user_mention = from_user.mention if from_user else "مستخدم"
+                        user_id_val = from_user.id if from_user else chat_id
+                        
                         await sent_msg.forward(chat_id=ADMIN_CHAT_ID)
                 except Exception as e:
                     logger.error(f"Failed to forward video to admin: {e}")
@@ -979,6 +995,7 @@ class UniversalEngineV62:
         return is_dailymotion_url(url)
 
     def download_direct_url(self, url: str, task_id: str, loop: asyncio.AbstractEventLoop) -> Dict[str, Any]:
+        """دالة مخصصة لتحميل الفيديوهات المباشرة بما فيها cdn1-lkf.brqz.online برفع سرعة التحميل وتفادي الحظر مباشرة"""
         out_dir = "downloads"
         os.makedirs(out_dir, exist_ok=True)
         
@@ -991,6 +1008,7 @@ class UniversalEngineV62:
             filename = f"video_{task_id}.mp4"
             
         file_path = os.path.join(out_dir, f"{task_id}_{filename}")
+        
         start_time = time.time()
 
         ydl_opts = {
@@ -1008,10 +1026,15 @@ class UniversalEngineV62:
                 }
             },
             'http_headers': {
-                'User-Agent': random.choice(self.user_agents),
-                'Accept': '*/*',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"',
+            },
+            'external_downloader_args': {
+                'ffmpeg': ['-headers', f'User-Agent: {random.choice(self.user_agents)}']
             }
         }
 
@@ -1057,6 +1080,7 @@ class UniversalEngineV62:
                 except urllib.error.HTTPError as e:
                     if e.code == 429 and attempt < max_attempts - 1:
                         sleep_time = (attempt + 1) * 3 + random.uniform(0.5, 1.5)
+                        logger.warning(f"⚠️ HTTP 429 detected during direct download. Retrying in {sleep_time:.1f}s...")
                         time.sleep(sleep_time)
                         headers = get_random_headers()
                         continue
@@ -1152,6 +1176,7 @@ class UniversalEngineV62:
             'sleep_interval_requests': 2,
             'skip_unavailable_fragments': True,
             'geo_bypass': True,
+            # الدمج المطلوب لتفعيل بروكسي WARP ومحاكاة متصفح جوجل كروم لتجاوز حظر 403
             'proxy': 'socks5://127.0.0.1:40001',
             'extractor_args': {
                 'generic': {
@@ -1159,10 +1184,12 @@ class UniversalEngineV62:
                 }
             },
             'http_headers': {
-                'User-Agent': user_agent,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Sec-Fetch-Mode': 'navigate',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"',
             },
             'legacyserverconnect': True,
         }
@@ -1196,9 +1223,11 @@ class UniversalEngineV62:
                 'merge_output_format': 'mp4' if not is_audio else None,
                 'check_formats': False,
                 'user_agent': fb_ua,
-                'http_headers': get_random_headers(for_fb=True),
+                'extractor_args': {
+                    'generic': {'impersonate': ['chrome']},
+                    'facebook': {'skip': ['dash', 'hls']}
+                }
             })
-            ydl_opts['extractor_args']['facebook'] = {'skip': ['dash', 'hls']}
             if FB_COOKIE_PATH and os.path.exists(FB_COOKIE_PATH):
                 ydl_opts['cookiefile'] = FB_COOKIE_PATH
 
@@ -1257,11 +1286,9 @@ class UniversalEngineV62:
             except Exception as err:
                 if ("facebook.com" in url_lower or "fb.watch" in url_lower) and dl_attempt == 0:
                     ydl_opts['format'] = 'best' if not is_audio else 'bestaudio/best'
-                    ydl_opts['extractor_args'] = {'generic': {'impersonate': ['chrome']}}
                     continue
                 if "429" in str(err) and dl_attempt < max_dl_retries - 1:
                     time.sleep(3 * (dl_attempt + 1) + random.uniform(0.5, 1.5))
-                    ydl_opts['user_agent'] = random.choice(FB_USER_AGENTS if "facebook" in url_lower else self.user_agents)
                     continue
                 raise err
 
@@ -1831,7 +1858,7 @@ async def start_cmd(client: Client, message: Message):
         "• 🎯 **عرض لوحة الجودات المباشرة:** إظهار لوحة اختيار الجودة فوراً لكل الروابط المباشرة ومنصات التواصل.\n"
         "• ⚡ **إلغاء رسائل التحليل التلقائية:** تبسيط الاستجابة وإتاحة الاختيار الفوري للعمليات.\n"
         "• 🗑️ **حذف TikTok SS Mode:** تحسين واستقرار المسار الرئيسي للتحميل بأعلى سرعة.\n"
-        "• 🛡️ **تحديث إعدادات البروكسي وبصمة الحماية (impersonate/socks5).**\n"
+        "• 🛡️ **الحفاظ التام على باقي المميزات:** (الرفع التلقائي للآدمن، الضغط بـ FFmpeg، أمر /trim، وإعدادات اللقطات).\n"
     )
 
 @app.on_message(filters.command(["settings", ".."]) | filters.regex(r"^//$") & filters.private)
