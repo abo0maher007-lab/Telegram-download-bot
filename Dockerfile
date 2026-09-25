@@ -1,12 +1,12 @@
 FROM python:3.11-slim
 
-# تثبيت FFmpeg، التحديثات الأساسية، وأدوات التحميل
+# تثبيت FFmpeg والتحديثات الأساسية للتحميل والأدوات
 RUN apt-get update && \
-    apt-get install -y ffmpeg wget curl && \
+    apt-get install -y ffmpeg wget curl chmod && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/**
+    rm -rf /var/lib/apt/lists/*
 
-# تحميل أداة wireproxy المخصصة لـ Linux 64-bit المتوافقة مع سيرفرات Railway
+# تحميل أداة wireproxy المخصصة لـ Linux 64-bit المتوافقة مع Railway
 RUN wget https://github.com -O /usr/local/bin/wireproxy && \
     chmod +x /usr/local/bin/wireproxy
 
@@ -18,8 +18,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# تحويل ملف الإقلاع المساعد ليصبح قابلاً للتشغيل
-RUN chmod +x start.sh
-
-# تشغيل البوت عبر سكريبت الإقلاع المساعد لتفعيل البروكسي أولاً
-CMD ["./start.sh"]
+# تشغيل البوت مباشرة
+CMD ["python", "bot.py"]
