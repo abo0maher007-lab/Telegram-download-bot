@@ -1,4 +1,53 @@
 import os
+import subprocess
+import time
+
+def start_warp_proxy():
+    print("[+] جاري إعداد وتجهيز نفق WARP 1.1.1.1 برمجياً...")
+    
+    # قراءة المفاتيح التي وضعتها في متغيرات Railway
+    warp_private_key = os.getenv("WARP_PRIVATE_KEY")
+    warp_public_key = os.getenv("WARP_PUBLIC_KEY")
+    
+    if not warp_private_key or not warp_public_key:
+        print("[-] خطأ: لم يتم العثور على مفاتيح WARP في متغيرات المنصة (Variables)!")
+        return False
+        
+    # كتابة ملف الإعدادات بدقة
+    config_content = f"""[Interface]
+PrivateKey = {warp_private_key}
+Address = 172.16.0.2/32, 2606:4700:110:8413:1f72:a87e:b2ee:a1f6/128
+
+[Peer]
+PublicKey = {warp_public_key}
+Endpoint = ://cloudflareclient.com
+
+[Socks5]
+BindAddress = 127.0.0.1:40001
+"""
+    
+    with open("wireproxy.conf", "w") as f:
+        f.write(config_content)
+        
+    try:
+        # تشغيل أداة wireproxy كعملية فرعية (Subprocess) في الخلفية داخل السيرفر
+        subprocess.Popen(["wireproxy", "-c", "wireproxy.conf"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print("[+] تم تشغيل أداة wireproxy بنجاح في خلفية السيرفر.")
+        
+        # الانتظار 4 ثوانٍ كاملة لضمان استقرار الاتصال وفتح المنفذ
+        time.sleep(4)
+        return True
+    except Exception as e:
+        print(f"[-] فشل تشغيل wireproxy برمجياً: {e}")
+        return False
+
+# استدعاء الدالة فوراً عند إقلاع الملف
+start_warp_proxy()
+
+# =========================================================
+# ضع هنا باقي كود البوت الخاص بك وإعدادات الـ ydl_opts الحالية
+# =========================================================
+import os
 import re
 import time
 import base64
